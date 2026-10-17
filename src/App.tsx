@@ -41,6 +41,7 @@ import {
   Lock,
   ChevronRight,
   HelpCircle,
+  Mail,
   X
 } from 'lucide-react';
 
@@ -209,6 +210,9 @@ interface SimpleBooking {
   escala?: string;
   maletaDirecta?: boolean;
   telefonoContacto?: string;
+  telefonoDestino?: string;
+  telefonoOrigen?: string;
+  emailContacto?: string;
   notas?: string;
   archivoNombre?: string;
   archivoDataUrl?: string;
@@ -225,7 +229,9 @@ interface HealthInfo {
   tieneSeguro: boolean;
   seguroCompania: string;
   seguroPoliza: string;
-  seguroTelefono: string;
+  seguroTelefono: string; // En el extranjero
+  seguroTelefonoOrigen?: string; // Desde tu país / Chile
+  seguroEmail?: string; // Correo de asistencia médica
   hospitalCercanoNombre: string;
   hospitalCercanoDireccion: string;
   hospitalCercanoTelefono: string;
@@ -303,6 +309,8 @@ const DEFAULT_TRIP: SimpleTrip = {
     seguroCompania: 'Asistencia Médica de Viaje',
     seguroPoliza: 'POL-BR-99120',
     seguroTelefono: '+55 11 3132 1000',
+    seguroTelefonoOrigen: '+56 2 2897 5000',
+    seguroEmail: 'asistencia@seguroviaje.com',
     hospitalCercanoNombre: 'UPA 24h Canasvieiras (Urgencias Públicas)',
     hospitalCercanoDireccion: 'Rua Francisco Faustino dos Santos, Canasvieiras',
     hospitalCercanoTelefono: '+55 48 3266 0149',
@@ -329,12 +337,15 @@ const DEFAULT_TRIP: SimpleTrip = {
     {
       id: 'pas-2',
       tipo: 'seguro',
-      titulo: 'Certificado de Asistencia Médica Internacional',
+      titulo: 'Póliza de Asistencia Médica Internacional',
       codigo: 'POL-BR-99120',
       fecha: '2026-12-23 al 2026-12-30',
-      hora: '24 horas',
+      hora: 'Cobertura 24 horas',
       telefonoContacto: '+55 11 3132 1000',
-      notas: 'Llamar antes de acudir al centro médico para coordinación.'
+      telefonoDestino: '+55 11 3132 1000',
+      telefonoOrigen: '+56 2 2897 5000',
+      emailContacto: 'asistencia@seguroviaje.com',
+      notas: 'Llamar antes de acudir al centro médico para coordinación directa sin pagar de tu bolsillo.'
     }
   ],
   equipaje: [
@@ -400,6 +411,10 @@ export default function App() {
   const [newBookingLayoverInfo, setNewBookingLayoverInfo] = useState('');
   const [newBookingBagDirect, setNewBookingBagDirect] = useState(true);
   const [newBookingPhone, setNewBookingPhone] = useState('');
+  const [newBookingPhoneDestino, setNewBookingPhoneDestino] = useState('');
+  const [newBookingPhoneOrigen, setNewBookingPhoneOrigen] = useState('');
+  const [newBookingEmail, setNewBookingEmail] = useState('');
+  const [newBookingSyncHealth, setNewBookingSyncHealth] = useState(true);
   const [newBookingFile, setNewBookingFile] = useState<{ name: string; url: string } | null>(null);
 
   const [isEditingLodging, setIsEditingLodging] = useState(false);
@@ -604,23 +619,37 @@ export default function App() {
     e.preventDefault();
     if (!newBookingTitle.trim() || !newBookingCode.trim()) return;
 
+    const isSeguro = newBookingType === 'seguro';
     const newBooking: SimpleBooking = {
       id: `booking-${Date.now()}`,
       tipo: newBookingType,
       titulo: newBookingTitle.trim(),
       codigo: newBookingCode.trim(),
-      fecha: newBookingDate || 'Fecha por confirmar',
-      hora: newBookingTime || '',
-      escala: newBookingHasLayover ? (newBookingLayoverInfo.trim() || 'Con escala') : 'Vuelo directo',
-      maletaDirecta: newBookingHasLayover ? newBookingBagDirect : true,
-      telefonoContacto: newBookingPhone.trim() || undefined,
+      fecha: newBookingDate || (isSeguro ? 'Durante todo el viaje' : 'Fecha por confirmar'),
+      hora: newBookingTime || (isSeguro ? 'Cobertura 24 horas' : ''),
+      escala: newBookingType === 'vuelo' ? (newBookingHasLayover ? (newBookingLayoverInfo.trim() || 'Con escala') : 'Vuelo directo') : undefined,
+      maletaDirecta: newBookingType === 'vuelo' ? (newBookingHasLayover ? newBookingBagDirect : true) : undefined,
+      telefonoContacto: isSeguro ? (newBookingPhoneDestino.trim() || newBookingPhoneOrigen.trim() || newBookingPhone.trim() || undefined) : (newBookingPhone.trim() || undefined),
+      telefonoDestino: isSeguro ? (newBookingPhoneDestino.trim() || undefined) : undefined,
+      telefonoOrigen: isSeguro ? (newBookingPhoneOrigen.trim() || undefined) : undefined,
+      emailContacto: isSeguro ? (newBookingEmail.trim() || undefined) : undefined,
+      notas: isSeguro ? 'Llamar a la aseguradora antes de acudir a una clínica para coordinar tu atención.' : undefined,
       archivoNombre: newBookingFile?.name,
       archivoDataUrl: newBookingFile?.url
     };
 
     setTrip((prev) => ({
       ...prev,
-      pasajesYDocumentos: [...prev.pasajesYDocumentos, newBooking]
+      pasajesYDocumentos: [...prev.pasajesYDocumentos, newBooking],
+      salud: (isSeguro && newBookingSyncHealth) ? {
+        ...prev.salud,
+        tieneSeguro: true,
+        seguroCompania: newBookingTitle.trim(),
+        seguroPoliza: newBookingCode.trim(),
+        seguroTelefono: newBookingPhoneDestino.trim() || newBookingPhone.trim() || prev.salud.seguroTelefono,
+        seguroTelefonoOrigen: newBookingPhoneOrigen.trim() || prev.salud.seguroTelefonoOrigen,
+        seguroEmail: newBookingEmail.trim() || prev.salud.seguroEmail
+      } : prev.salud
     }));
 
     setIsAddingBooking(false);
@@ -631,6 +660,9 @@ export default function App() {
     setNewBookingHasLayover(false);
     setNewBookingLayoverInfo('');
     setNewBookingPhone('');
+    setNewBookingPhoneDestino('');
+    setNewBookingPhoneOrigen('');
+    setNewBookingEmail('');
     setNewBookingFile(null);
   };
 
@@ -837,15 +869,47 @@ export default function App() {
 
             <div className="space-y-3">
               {trip.pasajesYDocumentos.map((doc) => (
-                <div key={doc.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md">
+                <div
+                  key={doc.id}
+                  className={`border rounded-2xl p-4 shadow-md transition ${
+                    doc.tipo === 'seguro'
+                      ? 'bg-slate-900/90 border-emerald-500/40'
+                      : doc.tipo === 'transporte'
+                      ? 'bg-slate-900/90 border-amber-500/40'
+                      : 'bg-slate-900 border-slate-800'
+                  }`}
+                >
                   <div className="flex items-center justify-between gap-2 mb-1.5">
                     <div className="flex items-center gap-2">
                       {doc.tipo === 'vuelo' ? (
-                        <Plane className="w-4 h-4 text-cyan-400 shrink-0" />
+                        <div className="w-7 h-7 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
+                          <Plane className="w-4 h-4 text-cyan-400" />
+                        </div>
+                      ) : doc.tipo === 'seguro' ? (
+                        <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                        </div>
                       ) : (
-                        <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                          <Bus className="w-4 h-4 text-amber-400" />
+                        </div>
                       )}
-                      <span className="font-bold text-white text-sm">{doc.titulo}</span>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-white text-sm">{doc.titulo}</span>
+                          <span
+                            className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
+                              doc.tipo === 'seguro'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : doc.tipo === 'transporte'
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                            }`}
+                          >
+                            {doc.tipo === 'seguro' ? 'Seguro Médico' : doc.tipo === 'transporte' ? 'Traslado / Bus' : 'Vuelo'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono font-black px-2.5 py-1 rounded bg-blue-500/20 text-cyan-300 border border-blue-500/40">
@@ -853,15 +917,15 @@ export default function App() {
                       </span>
                       <button
                         onClick={() => deleteBooking(doc.id)}
-                        className="text-slate-500 hover:text-rose-400 p-1"
-                        title="Eliminar"
+                        className="text-slate-500 hover:text-rose-400 p-1 cursor-pointer transition"
+                        title="Eliminar este ítem"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="text-xs text-slate-300 flex flex-wrap items-center gap-3">
+                  <div className="text-xs text-slate-300 flex flex-wrap items-center gap-3 mt-2">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-slate-400" /> {doc.fecha}
                     </span>
@@ -872,8 +936,9 @@ export default function App() {
                     )}
                   </div>
 
+                  {/* Escala (si es vuelo) */}
                   {doc.escala && (
-                    <div className="mt-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-xs">
+                    <div className="mt-2.5 p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-xs">
                       <div className="flex items-center gap-1.5 text-amber-300 font-semibold">
                         <CornerDownRight className="w-3.5 h-3.5" />
                         <span>{doc.escala}</span>
@@ -888,6 +953,18 @@ export default function App() {
                     </div>
                   )}
 
+                  {/* Tip de seguro si es póliza */}
+                  {doc.tipo === 'seguro' && doc.notas && (
+                    <div className="mt-2.5 p-2.5 bg-emerald-950/40 rounded-xl border border-emerald-500/30 text-xs text-emerald-200 flex items-start gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <div className="text-[11px] leading-relaxed">
+                        <strong className="text-emerald-300 block font-bold mb-0.5">Regla de Oro en caso de Enfermedad o Accidente:</strong>
+                        {doc.notas}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Archivo comprobante adjunto */}
                   {doc.archivoNombre && (
                     <div className="mt-2.5 p-2 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2 text-cyan-300 font-medium truncate">
@@ -911,22 +988,57 @@ export default function App() {
                     </div>
                   )}
 
+                  {/* Botones de acción rápida: Copiar código, Llamar Extranjero, Llamar Chile, Email */}
                   <div className="mt-3 flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => copyToClipboard(doc.codigo, doc.id)}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition cursor-pointer"
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
                     >
                       {copiedKey === doc.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedKey === doc.id ? '¡Código copiado!' : 'Copiar código'}</span>
+                      <span>{copiedKey === doc.id ? '¡Código copiado!' : (doc.tipo === 'seguro' ? 'Copiar Póliza' : 'Copiar código')}</span>
                     </button>
 
-                    {doc.telefonoContacto && (
+                    {/* Teléfono Extranjero */}
+                    {doc.telefonoDestino && (
                       <a
-                        href={`tel:${doc.telefonoContacto}`}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition"
+                        href={`tel:${doc.telefonoDestino.replace(/[^0-9+]/g, '')}`}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition shadow-sm"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>📞 Llamar en Extranjero ({doc.telefonoDestino})</span>
+                      </a>
+                    )}
+
+                    {/* Teléfono Origen / Chile */}
+                    {doc.telefonoOrigen && (
+                      <a
+                        href={`tel:${doc.telefonoOrigen.replace(/[^0-9+]/g, '')}`}
+                        className="px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>🇨🇱 Desde Chile / País Origen ({doc.telefonoOrigen})</span>
+                      </a>
+                    )}
+
+                    {/* Teléfono genérico si no están los dos anteriores */}
+                    {doc.telefonoContacto && !doc.telefonoDestino && !doc.telefonoOrigen && (
+                      <a
+                        href={`tel:${doc.telefonoContacto.replace(/[^0-9+]/g, '')}`}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
                       >
                         <Phone className="w-3.5 h-3.5 text-cyan-400" />
                         <span>Llamar ({doc.telefonoContacto})</span>
+                      </a>
+                    )}
+
+                    {/* Correo Asistencia */}
+                    {doc.emailContacto && (
+                      <a
+                        href={`mailto:${doc.emailContacto}`}
+                        className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-200 border border-purple-500/30 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
+                      >
+                        <Mail className="w-3.5 h-3.5 text-purple-400" />
+                        <span>✉️ {doc.emailContacto}</span>
                       </a>
                     )}
                   </div>
@@ -1386,17 +1498,52 @@ export default function App() {
 
                   {trip.salud.tieneSeguro ? (
                     <div>
-                      <div className="text-white font-bold text-sm">{trip.salud.seguroCompania}</div>
-                      <div className="text-xs text-cyan-300 font-mono mt-0.5">Póliza: {trip.salud.seguroPoliza}</div>
-                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <div className="text-white font-bold text-sm">{trip.salud.seguroCompania}</div>
+                          <div className="text-xs text-cyan-300 font-mono mt-0.5">Póliza: {trip.salud.seguroPoliza}</div>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(trip.salud.seguroPoliza, 'poliza_salud')}
+                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition cursor-pointer"
+                        >
+                          {copiedKey === 'poliza_salud' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedKey === 'poliza_salud' ? '¡Copiada!' : 'Copiar Póliza'}</span>
+                        </button>
+                      </div>
+
+                      {/* Botones de contacto de emergencia */}
+                      <div className="mt-2.5 flex items-center gap-2 flex-wrap">
                         {trip.salud.seguroTelefono && (
                           <a
-                            href={`tel:${trip.salud.seguroTelefono}`}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+                            href={`tel:${trip.salud.seguroTelefono.replace(/[^0-9+]/g, '')}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-sm"
                           >
-                            <Phone className="w-3 h-3" /> Llamar Central 24h ({trip.salud.seguroTelefono})
+                            <Phone className="w-3.5 h-3.5" /> 📞 Llamar en Extranjero ({trip.salud.seguroTelefono})
                           </a>
                         )}
+
+                        {trip.salud.seguroTelefonoOrigen && (
+                          <a
+                            href={`tel:${trip.salud.seguroTelefonoOrigen.replace(/[^0-9+]/g, '')}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 rounded-lg text-xs font-semibold transition"
+                          >
+                            <Phone className="w-3.5 h-3.5 text-cyan-400" /> 🇨🇱 Desde Chile / País Origen ({trip.salud.seguroTelefonoOrigen})
+                          </a>
+                        )}
+
+                        {trip.salud.seguroEmail && (
+                          <a
+                            href={`mailto:${trip.salud.seguroEmail}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-200 border border-purple-500/30 rounded-lg text-xs font-semibold transition"
+                          >
+                            <Mail className="w-3.5 h-3.5 text-purple-400" /> ✉️ {trip.salud.seguroEmail}
+                          </a>
+                        )}
+                      </div>
+
+                      <div className="mt-2.5 p-2 bg-emerald-950/40 rounded-lg border border-emerald-500/20 text-[11px] text-emerald-300">
+                        💡 <strong>Consejo del Viajero:</strong> Antes de acudir por tu cuenta a cualquier clínica o posta, llama a la central de tu seguro para que ellos coordinen la clínica con convenio y no tengas que pagar nada en el lugar.
                       </div>
                     </div>
                   ) : (
@@ -1856,6 +2003,40 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Seguro de Asistencia Médica Internacional */}
+              {trip.salud.tieneSeguro && (
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-emerald-500/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-emerald-400 text-[10px] uppercase font-bold flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      Seguro de Asistencia Médica 24h:
+                    </span>
+                    <span className="text-xs font-mono font-bold text-cyan-300">
+                      {trip.salud.seguroPoliza}
+                    </span>
+                  </div>
+                  <strong className="text-white text-xs block mt-1">{trip.salud.seguroCompania}</strong>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {trip.salud.seguroTelefono && (
+                      <a
+                        href={`tel:${trip.salud.seguroTelefono.replace(/[^0-9+]/g, '')}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                      >
+                        <Phone className="w-3.5 h-3.5" /> Llamar en Extranjero ({trip.salud.seguroTelefono})
+                      </a>
+                    )}
+                    {trip.salud.seguroTelefonoOrigen && (
+                      <a
+                        href={`tel:${trip.salud.seguroTelefonoOrigen.replace(/[^0-9+]/g, '')}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 rounded-xl text-xs font-semibold transition"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-cyan-400" /> Llamar desde Chile ({trip.salud.seguroTelefonoOrigen})
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
                 <span className="text-slate-400 text-[10px] uppercase font-bold block">Contacto Familiar en Chile:</span>
                 <strong className="text-cyan-300 text-xs block mt-0.5">{trip.familiarNombre}</strong>
@@ -1989,23 +2170,79 @@ export default function App() {
             <form onSubmit={handleAddBooking} className="space-y-3 mt-3">
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">Tipo de Documento</label>
-                <select
-                  value={newBookingType}
-                  onChange={(e) => setNewBookingType(e.target.value as any)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                >
-                  <option value="vuelo">Vuelo / Pasaje Aéreo</option>
-                  <option value="seguro">Seguro de Viaje</option>
-                  <option value="transporte">Traslado / Bus / Tren</option>
-                </select>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewBookingType('vuelo')}
+                    className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition flex flex-col items-center gap-1 cursor-pointer ${
+                      newBookingType === 'vuelo'
+                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <Plane className="w-4 h-4" />
+                    <span>Vuelo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewBookingType('seguro')}
+                    className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition flex flex-col items-center gap-1 cursor-pointer ${
+                      newBookingType === 'seguro'
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Seguro Médico</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewBookingType('transporte')}
+                    className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition flex flex-col items-center gap-1 cursor-pointer ${
+                      newBookingType === 'transporte'
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <Bus className="w-4 h-4" />
+                    <span>Traslado / Bus</span>
+                  </button>
+                </div>
               </div>
 
+              {/* Banner explicativo si es Seguro */}
+              {newBookingType === 'seguro' && (
+                <div className="p-3 bg-emerald-950/40 rounded-xl border border-emerald-500/30 text-xs text-slate-300 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-300">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Los 4 datos vitales de la póliza (los que sí salvan):</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Las pólizas tienen muchas páginas con formularios que nadie lee. En caso de una urgencia médica, la clínica solo necesita tu <strong>número de póliza</strong> y estos <strong>teléfonos de emergencia</strong> para atenderte sin que pagues de tu bolsillo.
+                  </p>
+                </div>
+              )}
+
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Nombre o Aerolínea *</label>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  {newBookingType === 'vuelo'
+                    ? 'Aerolínea o Ruta de Vuelo *'
+                    : newBookingType === 'seguro'
+                    ? 'Compañía de Seguro o Asistencia Médica *'
+                    : 'Nombre del Traslado o Empresa de Bus/Tren *'}
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ej: JetSmart vuelo a Florianópolis"
+                  placeholder={
+                    newBookingType === 'vuelo'
+                      ? 'Ej: JetSmart vuelo Santiago a Florianópolis'
+                      : newBookingType === 'seguro'
+                      ? 'Ej: Assist Card, Universal Assistance, etc.'
+                      : 'Ej: Transfer Aeropuerto a Posada Canasvieiras'
+                  }
                   value={newBookingTitle}
                   onChange={(e) => setNewBookingTitle(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
@@ -2013,39 +2250,117 @@ export default function App() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Código de Reserva (o Póliza) *</label>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  {newBookingType === 'seguro' ? 'Número de Póliza / Voucher *' : 'Código de Reserva / Billete *'}
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ej: 13N7JY"
+                  placeholder={newBookingType === 'seguro' ? 'Ej: POL-BR-99120' : 'Ej: 13N7JY'}
                   value={newBookingCode}
                   onChange={(e) => setNewBookingCode(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono uppercase"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Fecha</label>
-                  <input
-                    type="date"
-                    value={newBookingDate}
-                    onChange={(e) => setNewBookingDate(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Hora de Salida</label>
-                  <input
-                    type="time"
-                    value={newBookingTime}
-                    onChange={(e) => setNewBookingTime(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
+              {/* Campos específicos para SEGURO */}
+              {newBookingType === 'seguro' ? (
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      📞 Teléfono de Emergencia en el Extranjero (llamada local en destino)
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="Ej: +55 11 3132 1000"
+                      value={newBookingPhoneDestino}
+                      onChange={(e) => setNewBookingPhoneDestino(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
+                    <span className="text-[10px] text-slate-400 block mt-0.5">El número para llamar desde el país donde te encuentres si necesitas médico.</span>
+                  </div>
 
-              {/* Escala */}
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      🇨🇱 Teléfono de Asistencia desde tu País de Origen (Chile)
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="Ej: +56 2 2897 5000"
+                      value={newBookingPhoneOrigen}
+                      onChange={(e) => setNewBookingPhoneOrigen(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Por si llamas con tu chip propio o tu familia en Chile debe llamar para coordinar.</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      ✉️ Correo Electrónico de Asistencia Médica (Opcional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="Ej: asistencias@seguroviaje.com"
+                      value={newBookingEmail}
+                      onChange={(e) => setNewBookingEmail(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Útil si no tienes señal celular pero sí WiFi en el hotel o clínica.</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                    <input
+                      type="checkbox"
+                      id="syncHealth"
+                      checked={newBookingSyncHealth}
+                      onChange={(e) => setNewBookingSyncHealth(e.target.checked)}
+                      className="w-4 h-4 text-emerald-500 rounded"
+                    />
+                    <label htmlFor="syncHealth" className="text-[11px] text-slate-200 cursor-pointer">
+                      Sincronizar automáticamente con la pestaña de <strong>Salud &amp; Urgencias</strong> y la <strong>Ficha SOS</strong>
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                /* Fechas, horas y teléfono para Vuelo o Transporte */
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Fecha</label>
+                      <input
+                        type="date"
+                        value={newBookingDate}
+                        onChange={(e) => setNewBookingDate(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Hora de Salida</label>
+                      <input
+                        type="time"
+                        value={newBookingTime}
+                        onChange={(e) => setNewBookingTime(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      Teléfono de Contacto de la Empresa (Opcional)
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="Ej: +56 2 2731 8787"
+                      value={newBookingPhone}
+                      onChange={(e) => setNewBookingPhone(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Escala (si es vuelo) */}
               {newBookingType === 'vuelo' && (
                 <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
                   <div className="flex items-center justify-between">
@@ -2090,7 +2405,7 @@ export default function App() {
               {/* Archivo adjunto */}
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">
-                  Adjuntar Comprobante o Foto del Pasaje (Opcional)
+                  Adjuntar Comprobante o Foto (Opcional)
                 </label>
                 <label className="border border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-950/60 transition">
                   <Upload className="w-5 h-5 text-cyan-400 mb-1" />
@@ -2110,15 +2425,15 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsAddingBooking(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-semibold"
+                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-semibold cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold cursor-pointer"
                 >
-                  Guardar
+                  Guardar en mi Bitácora
                 </button>
               </div>
             </form>
@@ -2246,27 +2561,49 @@ export default function App() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Número de Póliza / Voucher</label>
+                    <input
+                      type="text"
+                      value={healthForm.seguroPoliza}
+                      onChange={(e) => setHealthForm({ ...healthForm, seguroPoliza: e.target.value })}
+                      placeholder="Ej: POL-BR-99120"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-slate-300 font-semibold mb-1">Número de Póliza</label>
-                      <input
-                        type="text"
-                        value={healthForm.seguroPoliza}
-                        onChange={(e) => setHealthForm({ ...healthForm, seguroPoliza: e.target.value })}
-                        placeholder="Ej: POL-12345"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-slate-300 font-semibold mb-1">Teléfono 24h del Seguro</label>
+                      <label className="block text-slate-300 font-semibold mb-1">📞 Teléfono en el Extranjero</label>
                       <input
                         type="tel"
                         value={healthForm.seguroTelefono}
                         onChange={(e) => setHealthForm({ ...healthForm, seguroTelefono: e.target.value })}
                         placeholder="Ej: +55 11 3132 1000"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
                       />
                     </div>
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">🇨🇱 Teléfono desde Chile / Origen</label>
+                      <input
+                        type="tel"
+                        value={healthForm.seguroTelefonoOrigen || ''}
+                        onChange={(e) => setHealthForm({ ...healthForm, seguroTelefonoOrigen: e.target.value })}
+                        placeholder="Ej: +56 2 2897 5000"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">✉️ Correo Electrónico de Asistencia Médica</label>
+                    <input
+                      type="email"
+                      value={healthForm.seguroEmail || ''}
+                      onChange={(e) => setHealthForm({ ...healthForm, seguroEmail: e.target.value })}
+                      placeholder="Ej: asistencias@seguroviaje.com"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                    />
                   </div>
                 </div>
               )}
