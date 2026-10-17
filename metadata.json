@@ -1,0 +1,7 @@
+{
+  "name": "Viaja Fácil - Tu Bitácora Práctica de Viaje",
+  "description": "La tranquilidad de saber que llevas todo preparado, incluso cuando estás lejos de casa. Bitácora inteligente con pasajes, equipaje cápsula, movilidad y urgencias.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
