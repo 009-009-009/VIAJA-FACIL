@@ -172,7 +172,7 @@ const DEFAULT_TRIP: SimpleTrip = {
   movilidad: DESTINATIONS.brasil.movilidad,
   salud: {
     tieneSeguro: true,
-    seguroCompania: 'Seguro de Viaje Internacional',
+    seguroCompania: 'Seguro de Viaje', // Nombre libremente editable por el usuario
     seguroPoliza: 'POL-BR-99120',
     seguroTelefono: '+55 11 3132 1000',
     seguroTelefonoOrigen: '+56 2 2897 5000',
@@ -254,7 +254,7 @@ export default function App() {
     return DEFAULT_TRIP;
   });
 
-  const [activeTab, setActiveTab] = useState<'pasajes_seguro' | 'equipaje' | 'moverte' | 'salud'>('pasajes_seguro');
+  const [activeTab, setActiveTab] = useState<'pasajes' | 'equipaje' | 'moverte' | 'salud' | 'tips'>('pasajes');
   const [showSosModal, setShowSosModal] = useState(false);
   const [showChangeCountryModal, setShowChangeCountryModal] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -287,7 +287,7 @@ export default function App() {
 
   // Modal seguro dedicado
   const [insuranceForm, setInsuranceForm] = useState({
-    compania: trip.salud.seguroCompania || 'Assist Card',
+    compania: trip.salud.seguroCompania || '',
     poliza: trip.salud.seguroPoliza || 'POL-99218-BR',
     fechaInicio: trip.salud.seguroFechaInicio || '2025-12-26',
     fechaFin: trip.salud.seguroFechaFin || '2026-01-01',
@@ -319,7 +319,7 @@ export default function App() {
 
   const openEditInsuranceModal = () => {
     setInsuranceForm({
-      compania: trip.salud.seguroCompania || 'Assist Card',
+      compania: trip.salud.seguroCompania || '',
       poliza: trip.salud.seguroPoliza || 'POL-99218-BR',
       fechaInicio: trip.salud.seguroFechaInicio || '2025-12-26',
       fechaFin: trip.salud.seguroFechaFin || '2026-01-01',
@@ -819,11 +819,11 @@ export default function App() {
           con 4 columnas exactas (25% cada una), iconos claros y etiquetas compactas.
         */}
         <div className="border-t border-slate-800/80 bg-slate-950/95 w-full px-1.5 py-1">
-          <nav className="max-w-2xl mx-auto grid grid-cols-4 gap-1 w-full" aria-label="Navegación principal">
+          <nav className="max-w-2xl mx-auto grid grid-cols-5 gap-1 w-full" aria-label="Navegación principal">
             <button
-              onClick={() => setActiveTab('pasajes_seguro')}
+              onClick={() => setActiveTab('pasajes')}
               className={`py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold transition flex flex-col items-center justify-center gap-0.5 w-full cursor-pointer ${
-                activeTab === 'pasajes_seguro'
+                activeTab === 'pasajes'
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
               }`}
@@ -867,6 +867,18 @@ export default function App() {
               <Stethoscope className="w-4 h-4 shrink-0 text-emerald-400" />
               <span className="truncate w-full text-center">4. Salud</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('tips')}
+              className={`py-1.5 px-0.5 rounded-xl text-[10px] sm:text-xs font-bold transition flex flex-col items-center justify-center gap-0.5 w-full cursor-pointer ${
+                activeTab === 'tips'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/30'
+                  : 'text-amber-300 hover:text-white hover:bg-slate-900/60'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 shrink-0 text-amber-400" />
+              <span className="truncate w-full text-center">5. Reglas Oro</span>
+            </button>
           </nav>
         </div>
       </header>
@@ -877,7 +889,7 @@ export default function App() {
         {/* ========================================================================= */}
         {/* --- PÁGINA 1: MIS PASAJES & SEGURO (CON EL CUADRO RESUMEN Y CAMBIAR DESTINO) --- */}
         {/* ========================================================================= */}
-        {activeTab === 'pasajes_seguro' && (
+        {activeTab === 'pasajes' && (
           <div className="space-y-4">
             {/* El Cuadrito Resumen (ÚNICAMENTE en esta primera página) */}
             <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/50 border border-slate-800 rounded-2xl p-4 shadow-xl">
@@ -1200,230 +1212,7 @@ export default function App() {
               </div>
             )}
 
-            {/* ========================================================================= */}
-            {/* --- SECCIÓN DEDICADA: ¿VIAJAS CON SEGURO DE VIAJE? --- */}
-            {/* ========================================================================= */}
-            {/* ========================================================================= */}
-            <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
-              <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      ¿Viajas con Seguro de Viaje?
-                    </h3>
-                    <span className="text-[11px] text-slate-400 block">
-                      Cubre urgencias médicas, hospitalización, demoras y pérdida de equipaje.
-                    </span>
-                  </div>
-                </div>
-
-                {/* Toggle SÍ / NO */}
-                <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setTrip((prev) => ({ ...prev, salud: { ...prev.salud, tieneSeguro: true } }))}
-                    className={`px-3.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
-                      trip.salud.tieneSeguro
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    SÍ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTrip((prev) => ({ ...prev, salud: { ...prev.salud, tieneSeguro: false } }))}
-                    className={`px-3.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
-                      !trip.salud.tieneSeguro
-                        ? 'bg-rose-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    NO
-                  </button>
-                </div>
-              </div>
-
-              {/* Si la respuesta es SÍ: Despliegue de los datos de la aseguradora */}
-              {trip.salud.tieneSeguro ? (
-                <div className="space-y-3">
-                  {/* Tarjeta de la Aseguradora */}
-                  <div className="bg-slate-950/90 p-4 rounded-xl border border-emerald-500/30 space-y-3">
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
-                          Compañía Aseguradora:
-                        </span>
-                        <strong className="text-white text-base font-bold block mt-0.5">
-                          {trip.salud.seguroCompania || 'Seguro de Viaje'}
-                        </strong>
-                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                          <span className="text-xs text-slate-300 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                            N° Póliza / Voucher: <strong className="text-emerald-300">{trip.salud.seguroPoliza || 'Sin registrar'}</strong>
-                          </span>
-                          <button
-                            onClick={() => copyToClipboard(trip.salud.seguroPoliza || '', 'poliza-main')}
-                            className="text-[11px] text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
-                          >
-                            {copiedKey === 'poliza-main' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                            <span>{copiedKey === 'poliza-main' ? '¡Póliza copiada!' : 'Copiar'}</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={openEditInsuranceModal}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700 flex items-center gap-1.5 cursor-pointer transition shadow-sm shrink-0"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Editar Seguro</span>
-                      </button>
-                    </div>
-
-                    {/* Fechas de vigencia de la póliza */}
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2 text-xs text-slate-300">
-                      <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>
-                        Vigencia de Cobertura: <strong className="text-white">{trip.salud.seguroFechaInicio || '26/12/2025'}</strong> al <strong className="text-white">{trip.salud.seguroFechaFin || '01/01/2026'}</strong>
-                      </span>
-                    </div>
-
-                    {/* Canales de Asistencia: Extranjero, Casa y Email */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
-                      {/* Teléfono Extranjero */}
-                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                          📞 Llamar en el Extranjero (desde donde viajas):
-                        </span>
-                        {trip.salud.seguroTelefono ? (
-                          <a
-                            href={`tel:${trip.salud.seguroTelefono.replace(/[^0-9+]/g, '')}`}
-                            className="text-emerald-400 font-mono font-bold hover:underline flex items-center gap-1.5 text-xs"
-                          >
-                            <Phone className="w-3.5 h-3.5 shrink-0" />
-                            <span>{trip.salud.seguroTelefono}</span>
-                          </a>
-                        ) : (
-                          <span className="text-slate-500 italic">No registrado</span>
-                        )}
-                        <span className="text-[10px] text-slate-400 block mt-1">
-                          Llamada local en destino con chip de viaje o roaming.
-                        </span>
-                      </div>
-
-                      {/* Teléfono País de Origen / Casa */}
-                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                          🏠 Llamar desde tu País de Origen (Casa):
-                        </span>
-                        {trip.salud.seguroTelefonoOrigen ? (
-                          <a
-                            href={`tel:${trip.salud.seguroTelefonoOrigen.replace(/[^0-9+]/g, '')}`}
-                            className="text-cyan-400 font-mono font-bold hover:underline flex items-center gap-1.5 text-xs"
-                          >
-                            <Phone className="w-3.5 h-3.5 shrink-0" />
-                            <span>{trip.salud.seguroTelefonoOrigen}</span>
-                          </a>
-                        ) : (
-                          <span className="text-slate-500 italic">No registrado</span>
-                        )}
-                        <span className="text-[10px] text-slate-400 block mt-1">
-                          Para llamadas directas tuyas o para que tu familia coordine desde casa.
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Correo Electrónico de la Aseguradora */}
-                    {trip.salud.seguroEmail && (
-                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 truncate">
-                          <Mail className="w-4 h-4 text-purple-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[10px] text-slate-400 uppercase font-bold block">Correo de Asistencia Médica:</span>
-                            <span className="text-purple-300 font-mono font-bold truncate">{trip.salud.seguroEmail}</span>
-                          </div>
-                        </div>
-                        <a
-                          href={`mailto:${trip.salud.seguroEmail}`}
-                          className="px-2.5 py-1 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 rounded-lg text-xs font-semibold shrink-0"
-                        >
-                          Enviar correo
-                        </a>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Recuadro de Oro de la Póliza: Instrucciones Vitales */}
-                  <div className="p-3.5 bg-gradient-to-r from-amber-950/30 via-slate-950 to-slate-950 rounded-xl border border-amber-500/40 text-xs space-y-2.5 text-slate-200">
-                    <div className="flex items-center gap-2 text-amber-300 font-bold">
-                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span className="text-xs uppercase tracking-wide">Protocolo de Oro ante Emergencias (Reglas de la Póliza):</span>
-                    </div>
-
-                    <p className="text-[11px] text-slate-300 leading-relaxed">
-                      <strong className="text-white">Se recuerda que siempre se debe llamar a la central de asistencia</strong> ante la necesidad de requerir algún servicio médico. Hay un <strong className="text-amber-300">plazo de 48 horas</strong> para dar aviso a la central de operaciones desde que suceden los síntomas o accidente para coordinar la atención y evitar pagar de tu bolsillo.
-                    </p>
-
-                    <div className="p-2.5 bg-slate-900/90 rounded-lg border border-slate-800 text-[11px] space-y-1">
-                      <strong className="text-amber-200 block font-bold">📋 Para coordinar las coberturas, te pedirán:</strong>
-                      <ul className="list-disc list-inside text-slate-300 space-y-0.5 pl-1">
-                        <li>Nombre del paciente y documento de identidad (RUT / Pasaporte).</li>
-                        <li>Fecha de nacimiento y dirección exacta donde se encuentra.</li>
-                        <li>Teléfono y email de contacto.</li>
-                        <li>Síntomas o problema de salud detallado.</li>
-                      </ul>
-                      <span className="text-[10px] text-slate-400 block pt-1 italic">
-                        * Toda decisión médica es evaluada y controlada por el departamento médico de la aseguradora junto al médico tratante.
-                      </span>
-                    </div>
-
-                    <div className="p-2.5 bg-slate-900/90 rounded-lg border border-slate-800 text-[11px] space-y-1">
-                      <strong className="text-cyan-300 block font-bold">🧾 Si te indican reembolso (al regreso a casa):</strong>
-                      <ul className="list-disc list-inside text-slate-300 space-y-0.5 pl-1">
-                        <li><strong>Asistencia médica:</strong> Reporte médico original y completo, comprobantes/facturas originales de gastos según plan contratado.</li>
-                        <li><strong>Demora y/o pérdida de equipaje:</strong> Formulario PIR y comprobantes originales de gastos.</li>
-                        <li><strong>Vuelo demorado:</strong> Constancia de la aerolínea certificando demora y comprobantes originales.</li>
-                      </ul>
-                    </div>
-
-                    <div className="p-2 bg-emerald-950/40 rounded-lg border border-emerald-500/20 text-[11px] text-emerald-300 flex items-start gap-1.5">
-                      <span className="shrink-0 text-sm">💡</span>
-                      <span>
-                        <strong>Consejo clave:</strong> Extrae estos números y tu número de póliza del documento antes de viajar y anótalos en una libreta física en tu bolso de mano por si te quedas sin batería o sin señal.
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                /* Si la respuesta es NO */
-                <div className="p-3.5 bg-rose-950/30 rounded-xl border border-rose-500/40 text-xs text-rose-200 space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-rose-300">
-                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-                    <span>Atención: Viajas sin Seguro Médico ni Asistencia</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    Las clínicas privadas en el extranjero cobran tarifas muy altas y exigen pago de inmediato con tarjeta o efectivo. Cualquier urgencia, accidente o complicación médica deberá ser pagada por ti o tu familia en casa.
-                  </p>
-                  <p className="text-[11px] text-slate-400">
-                    Te recomendamos contratar una póliza antes de abordar tu viaje.
-                  </p>
-                  <div className="pt-1">
-                    <button
-                      onClick={() => {
-                        setTrip((prev) => ({ ...prev, salud: { ...prev.salud, tieneSeguro: true } }));
-                        openEditInsuranceModal();
-                      }}
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> ¿Contrataste uno? Registrar mi Seguro de Viaje
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            
           </div>
         )}
 
@@ -1433,63 +1222,7 @@ export default function App() {
         {activeTab === 'equipaje' && (
           <div className="space-y-4">
             
-            {/* 1. SECCIÓN DESTACADA Y MUY VISIBLE: DINERO Y TARJETAS SEPARADAS */}
-            <div className="bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-900 border-2 border-amber-500/70 rounded-2xl p-4 shadow-xl">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
-                  <Wallet className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-amber-200 uppercase tracking-wide">
-                    💳 Regla de Oro: Dinero y Tarjetas Separadas
-                  </h3>
-                  <span className="text-[11px] text-amber-300/90 font-medium">
-                    Evita quedarte sin fondos si pierdes tu bolso en la calle
-                  </span>
-                </div>
-              </div>
-
-              {/* Los 3 Consejos Vitales */}
-              <div className="space-y-2 mt-3 text-xs text-slate-300">
-                <div className="p-2.5 bg-slate-950/90 rounded-xl border border-amber-500/30 flex items-start gap-2.5">
-                  <span className="text-base shrink-0">👛</span>
-                  <div>
-                    <strong className="text-white block font-bold mb-0.5">
-                      1. Dinero del momento (Gasto diario):
-                    </strong>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">
-                      Lleva solo el efectivo necesario para el día en una billetera pequeña o bolsillo frontal. Si sufres un descuido o robo callejero, solo perderás lo del día.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-2.5 bg-slate-950/90 rounded-xl border border-amber-500/30 flex items-start gap-2.5">
-                  <span className="text-base shrink-0">🔐</span>
-                  <div>
-                    <strong className="text-white block font-bold mb-0.5">
-                      2. El "Grueso" del dinero del viaje:
-                    </strong>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">
-                      <strong>NUNCA salgas a la calle con todo el dinero de tus vacaciones en la cartera.</strong> Guarda el fondo principal en la caja fuerte de tu posada/hotel o en un cinturón secreto pegado al cuerpo bajo la ropa.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-2.5 bg-slate-950/90 rounded-xl border border-amber-500/30 flex items-start gap-2.5">
-                  <span className="text-base shrink-0">🏦</span>
-                  <div>
-                    <strong className="text-white block font-bold mb-0.5">
-                      3. Tarjetas bancarias y aviso de viaje:
-                    </strong>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">
-                      Lleva 2 tarjetas distintas si tienes. Deja una en el hotel de respaldo por si el cajero retiene una o se extravía. <strong>Avisa a tu banco o activa compras internacionales</strong> desde la app bancaria antes de salir de tu país.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. LOS INFALTABLES (Lo que no se compra en destino) */}
+            {/* 1. LOS INFALTABLES (Lo que no se compra en destino) */}
             <div className="bg-slate-900 border border-rose-500/40 rounded-2xl p-4 shadow-lg">
               <div className="flex items-center justify-between mb-1.5">
                 <h3 className="text-sm font-bold text-rose-300 uppercase tracking-wider flex items-center gap-2">
@@ -1719,46 +1452,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* 
-              2. BANNER ROJO VITAL EN COLOR DE ALERTA MÁXIMA: 
-              NUNCA DEJAR LA MALETA O MOCHILA CON DESCONOCIDOS 
-            */}
-            <div className="bg-gradient-to-r from-red-950 via-rose-950 to-red-950 border-2 border-red-500 rounded-2xl p-4 shadow-2xl text-xs text-red-100 relative overflow-hidden">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-red-600 text-white shrink-0 shadow-lg shadow-red-600/40">
-                  <AlertTriangle className="w-6 h-6 animate-pulse" />
-                </div>
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="bg-red-500 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-wider shadow">
-                      ALERTA VITAL DE SEGURIDAD
-                    </span>
-                    <h4 className="font-black text-red-100 text-sm tracking-tight">
-                      ¡NUNCA dejes tu maleta o mochila encargada a un desconocido!
-                    </h4>
-                  </div>
-                  
-                  <p className="leading-relaxed text-red-100 text-xs">
-                    Ni para ir al baño 2 minutos, ni para comprar agua o un café, <strong>por muy simpático, amable, educado o adulto mayor que parezca.</strong>
-                  </p>
-
-                  <div className="p-2.5 bg-black/40 rounded-xl border border-red-500/40 text-[11px] text-red-200 space-y-1">
-                    <p>
-                      ⚠️ <strong>Peligro no visualizado:</strong> Le ocurre mucho a jóvenes que se hacen amigos rápido y a adultos mayores que conversan con Raimundo y todo el mundo en aeropuertos, terminales de buses o playas.
-                    </p>
-                    <p className="font-bold text-white">
-                      ⚖️ <strong>Regla legal internacional:</strong> Si la policía o aduana revisa tu bolso y alguien introdujo una sustancia prohibida o un objeto ilegal, TÚ respondes penalmente por todo lo que vaya dentro.
-                    </p>
-                  </div>
-
-                  <p className="font-extrabold text-amber-300 text-xs pt-1 flex items-center gap-1">
-                    👉 Si viajas sola/o o en pareja, lleva tu bolso contigo hasta dentro del baño o usa la custodia oficial de equipajes de la terminal.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. LOS 5 PILARES EDUCATIVOS DE MOVILIDAD (ADAPTADOS DINÁMICAMENTE AL DESTINO) */}
+            {/* 2. GUÍA DE MOVILIDAD COMPLETA EN DESTINO */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
               <div className="flex items-center justify-between gap-2">
                 <div>
@@ -1828,233 +1522,557 @@ export default function App() {
         )}
 
         {/* ========================================================================= */}
-        {/* --- PÁGINA 4: SALUD & URGENCIAS REALES --- */}
+        {/* --- PÁGINA 4: SALUD & SEGURO MÉDICO --- */}
         {/* ========================================================================= */}
         {activeTab === 'salud' && (
           <div className="space-y-4">
-            <div className="bg-gradient-to-r from-rose-950/60 to-slate-900 border-2 border-rose-500/50 rounded-2xl p-4 flex items-start gap-3 text-xs text-rose-200 shadow-md">
-              <AlertOctagon className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white block font-bold mb-0.5">
-                  ¿Emergencia mayor o problema legal grave en {trip.pais}?
-                </strong>
-                <p className="leading-relaxed">
-                  Para situaciones críticas, asistencia consular oficial o trámites con tu familia, toca el botón <strong>"Ficha SOS"</strong> en la parte superior.
-                </p>
+            {/* ========================================================================= */}
+            {/* --- SECCIÓN PRINCIPAL: ¿VIAJAS CON SEGURO DE VIAJE? --- */}
+            {/* ========================================================================= */}
+            <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      ¿Viajas con Seguro de Viaje?
+                    </h3>
+                    <span className="text-[11px] text-slate-400 block">
+                      Cubre urgencias médicas, hospitalización, demoras y pérdida de equipaje.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Toggle SÍ / NO */}
+                <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setTrip((prev) => ({ ...prev, salud: { ...prev.salud, tieneSeguro: true } }))}
+                    className={`px-3.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                      trip.salud.tieneSeguro
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    SÍ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTrip((prev) => ({ ...prev, salud: { ...prev.salud, tieneSeguro: false } }))}
+                    className={`px-3.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                      !trip.salud.tieneSeguro
+                        ? 'bg-rose-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    NO
+                  </button>
+                </div>
+              </div>
+
+              {/* Si la respuesta es SÍ: Despliegue de los datos de la aseguradora */}
+              {trip.salud.tieneSeguro ? (
+                <div className="space-y-3">
+                  {/* Tarjeta de la Aseguradora */}
+                  <div className="bg-slate-950/90 p-4 rounded-xl border border-emerald-500/30 space-y-3">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
+                          Compañía Aseguradora:
+                        </span>
+                        <strong className="text-white text-base font-bold block mt-0.5">
+                          {trip.salud.seguroCompania || 'Seguro de Viaje Contratado'}
+                        </strong>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <span className="text-xs text-slate-300 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                            N° Póliza / Voucher: <strong className="text-emerald-300">{trip.salud.seguroPoliza || 'Sin registrar'}</strong>
+                          </span>
+                          <button
+                            onClick={() => copyToClipboard(trip.salud.seguroPoliza || '', 'poliza-main')}
+                            className="text-[11px] text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            {copiedKey === 'poliza-main' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedKey === 'poliza-main' ? '¡Póliza copiada!' : 'Copiar'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={openEditInsuranceModal}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700 flex items-center gap-1.5 cursor-pointer transition shadow-sm shrink-0"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Editar Seguro</span>
+                      </button>
+                    </div>
+
+                    {/* Fechas de vigencia de la póliza */}
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2 text-xs text-slate-300">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>
+                        Vigencia de Cobertura: <strong className="text-white">{trip.salud.seguroFechaInicio || '26/12/2025'}</strong> al <strong className="text-white">{trip.salud.seguroFechaFin || '01/01/2026'}</strong>
+                      </span>
+                    </div>
+
+                    {/* Teléfonos de Asistencia */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                      {/* Teléfono Destino (En el extranjero) */}
+                      <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block flex items-center gap-1">
+                          <span>📞</span> Llamar en el Extranjero (desde donde viajas):
+                        </span>
+                        {trip.salud.seguroTelefono ? (
+                          <div className="flex items-center justify-between gap-1">
+                            <a
+                              href={`tel:${trip.salud.seguroTelefono.replace(/[^0-9+]/g, '')}`}
+                              className="text-emerald-400 hover:underline font-mono font-bold text-xs"
+                            >
+                              {trip.salud.seguroTelefono}
+                            </a>
+                            <button
+                              onClick={() => copyToClipboard(trip.salud.seguroTelefono, 'tel-seguro-dest')}
+                              className="text-slate-400 hover:text-white p-1"
+                              title="Copiar teléfono"
+                            >
+                              {copiedKey === 'tel-seguro-dest' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-slate-500 text-[11px]">No registrado</span>
+                        )}
+                        <span className="text-[10px] text-slate-400 block">Llamada local en destino con chip de viaje o roaming.</span>
+                      </div>
+
+                      {/* Teléfono Origen (Para la familia en Casa) */}
+                      <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block flex items-center gap-1">
+                          <span>🏠</span> Llamar desde tu País de Origen (Casa):
+                        </span>
+                        {trip.salud.seguroTelefonoOrigen ? (
+                          <div className="flex items-center justify-between gap-1">
+                            <a
+                              href={`tel:${trip.salud.seguroTelefonoOrigen.replace(/[^0-9+]/g, '')}`}
+                              className="text-cyan-400 hover:underline font-mono font-bold text-xs"
+                            >
+                              {trip.salud.seguroTelefonoOrigen}
+                            </a>
+                            <button
+                              onClick={() => copyToClipboard(trip.salud.seguroTelefonoOrigen!, 'tel-seguro-orig')}
+                              className="text-slate-400 hover:text-white p-1"
+                              title="Copiar teléfono"
+                            >
+                              {copiedKey === 'tel-seguro-orig' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-slate-500 text-[11px]">No registrado</span>
+                        )}
+                        <span className="text-[10px] text-slate-400 block">Para llamadas directas tuyas o para que tu familia coordine desde casa.</span>
+                      </div>
+                    </div>
+
+                    {/* Correo Electrónico de Asistencia */}
+                    {trip.salud.seguroEmail && (
+                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-1.5 text-slate-300 truncate">
+                          <Mail className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                          <span className="text-slate-400 text-[10px] uppercase font-bold">Correo de Asistencia:</span>
+                          <strong className="text-purple-300 font-mono truncate">{trip.salud.seguroEmail}</strong>
+                        </div>
+                        <a
+                          href={`mailto:${trip.salud.seguroEmail}`}
+                          className="px-2.5 py-1 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 rounded-lg text-xs font-semibold shrink-0"
+                        >
+                          Enviar correo
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recuadro de Oro de la Póliza: Instrucciones Vitales */}
+                  <div className="p-3.5 bg-gradient-to-r from-amber-950/30 via-slate-950 to-slate-950 rounded-xl border border-amber-500/40 text-xs space-y-2.5 text-slate-200">
+                    <div className="flex items-center gap-2 text-amber-300 font-bold">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span className="text-xs uppercase tracking-wide">Protocolo de Oro ante Emergencias (Reglas de la Póliza):</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      <strong className="text-white">Se recuerda que siempre se debe llamar a la central de asistencia</strong> ante la necesidad de requerir algún servicio médico. Hay un <strong className="text-amber-300">plazo de 48 horas</strong> para dar aviso a la central de operaciones desde que suceden los síntomas o accidente para coordinar la atención y evitar pagar de tu bolsillo.
+                    </p>
+
+                    <div className="p-2.5 bg-slate-900/90 rounded-lg border border-slate-800 text-[11px] space-y-1">
+                      <strong className="text-amber-200 block font-bold">📋 Para coordinar las coberturas, te pedirán:</strong>
+                      <ul className="list-disc list-inside text-slate-300 space-y-0.5 pl-1">
+                        <li>Nombre del paciente y documento de identidad (RUT / Pasaporte).</li>
+                        <li>Fecha de nacimiento y dirección exacta donde se encuentra.</li>
+                        <li>Teléfono y email de contacto.</li>
+                        <li>Síntomas o problema de salud detallado.</li>
+                      </ul>
+                      <span className="text-[10px] text-slate-400 block pt-1 italic">
+                        * Toda decisión médica es evaluada y controlada por el departamento médico de la aseguradora junto al médico tratante.
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 bg-slate-900/90 rounded-lg border border-slate-800 text-[11px] space-y-1">
+                      <strong className="text-cyan-300 block font-bold">🧾 Si te indican reembolso (al regreso a casa):</strong>
+                      <ul className="list-disc list-inside text-slate-300 space-y-0.5 pl-1">
+                        <li><strong>Asistencia médica:</strong> Reporte médico original y completo, comprobantes/facturas originales de gastos según plan contratado.</li>
+                        <li><strong>Demora y/o pérdida de equipaje:</strong> Formulario PIR y comprobantes originales de gastos.</li>
+                        <li><strong>Vuelo demorado:</strong> Constancia de la aerolínea certificando demora y comprobantes originales.</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-2 bg-emerald-950/40 rounded-lg border border-emerald-500/20 text-[11px] text-emerald-300 flex items-start gap-1.5">
+                      <span className="shrink-0 text-sm">💡</span>
+                      <span>
+                        <strong>Consejo clave:</strong> Extrae estos números y tu número de póliza del documento antes de viajar y anótalos en una libreta física en tu bolso de mano por si te quedas sin batería o sin señal.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Si la respuesta es NO */
+                <div className="p-3.5 bg-rose-950/30 rounded-xl border border-rose-500/40 text-xs text-rose-200 space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-rose-300">
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>Atención: Viajas sin Seguro Médico ni Asistencia</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Las clínicas privadas en el extranjero cobran tarifas muy altas y exigen pago de inmediato con tarjeta o efectivo. Cualquier urgencia, accidente o complicación médica deberá ser pagada por ti o tu familia en casa.
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Te recomendamos contratar una póliza antes de abordar tu viaje.
+                  </p>
+                  <div className="pt-1">
+                    <button
+                      onClick={() => {
+                        setTrip((prev) => ({ ...prev, salud: { ...prev.salud, tieneSeguro: true } }));
+                        openEditInsuranceModal();
+                      }}
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> ¿Contrataste uno? Registrar mi Seguro de Viaje
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Urgencias y Ambulancia */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2 shadow-md">
+              <span className="text-[10px] font-bold uppercase text-slate-400 block">Ambulancia y Hospital Cercano:</span>
+              
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                <div>
+                  <span className="text-slate-400 text-[11px] block">Ambulancia Oficial en {trip.pais}:</span>
+                  <strong className="text-red-400 font-mono text-sm">{trip.salud.numeroAmbulanciaLocal}</strong>
+                </div>
+                <a
+                  href={`tel:${trip.salud.numeroAmbulanciaLocal.replace(/[^0-9]/g, '')}`}
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs"
+                >
+                  Llamar Ambulancia
+                </a>
+              </div>
+
+              <div className="text-xs text-slate-300 pt-1">
+                <span className="text-slate-400 block text-[11px]">Centro Médico / Clínica más cercano al hotel:</span>
+                <strong className="text-white block mt-0.5">{trip.salud.hospitalCercanoNombre || 'No especificado (averiguar al llegar)'}</strong>
+                <p className="text-slate-300 text-[11px] mt-0.5">{trip.salud.hospitalCercanoDireccion}</p>
+                {trip.salud.hospitalCercanoTelefono && (
+                  <p className="text-cyan-300 font-mono text-[11px] mt-0.5">Tel: {trip.salud.hospitalCercanoTelefono}</p>
+                )}
+
+                {/* Botones de acción rápida */}
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  {trip.salud.hospitalCercanoDireccion && (
+                    <button
+                      onClick={() => copyToClipboard(trip.salud.hospitalCercanoDireccion, 'dir_hospital')}
+                      className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                    >
+                      {copiedKey === 'dir_hospital' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                      <span>{copiedKey === 'dir_hospital' ? '¡Dirección copiada!' : 'Copiar dirección para Uber / Waze'}</span>
+                    </button>
+                  )}
+                  {trip.salud.hospitalCercanoTelefono && (
+                    <a
+                      href={`tel:${trip.salud.hospitalCercanoTelefono.replace(/[^0-9+]/g, '')}`}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Llamar al Centro Médico</span>
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Stethoscope className="w-4 h-4 text-emerald-400" />
-                  Salud en el Extranjero: Datos Reales
-                </h3>
+            {/* FICHA MÉDICA BÁSICA DEL VIAJERO */}
+            <div className="bg-gradient-to-br from-slate-950 via-slate-950 to-emerald-950/20 p-4 rounded-2xl border border-emerald-500/30 space-y-2.5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
+                  <Stethoscope className="w-3.5 h-3.5" />
+                  Ficha Médica Confidencial del Viajero
+                </span>
                 <button
                   onClick={() => {
                     setHealthForm(trip.salud);
                     setIsEditingHealth(true);
                   }}
-                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                  className="text-cyan-400 text-[11px] font-bold hover:underline cursor-pointer flex items-center gap-1"
                 >
-                  <Edit3 className="w-3 h-3" /> Rellenar / Editar
+                  <Edit3 className="w-3 h-3" /> Editar Ficha
                 </button>
               </div>
-
-              <p className="text-xs text-slate-300 mb-3 leading-relaxed">
-                Nadie te atenderá gratis en el extranjero por cortesía. Completa tus datos antes de viajar y llévalos en tu bolsillo:
+              <p className="text-[11px] text-slate-400 leading-tight">
+                Datos vitales para mostrar en pantalla a paramédicos o doctores si viajas sola o en caso de desmayo/accidente:
               </p>
-
-              <div className="space-y-3">
-                {/* Seguro */}
-                <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-bold uppercase text-slate-400">Póliza de Asistencia Médica:</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${trip.salud.tieneSeguro ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                      {trip.salud.tieneSeguro ? '✓ Seguro Contratado' : '⚠️ Sin seguro'}
-                    </span>
-                  </div>
-
-                  {trip.salud.tieneSeguro ? (
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <div className="text-white font-bold text-sm">{trip.salud.seguroCompania}</div>
-                          <div className="text-xs text-cyan-300 font-mono mt-0.5">Póliza: {trip.salud.seguroPoliza}</div>
-                        </div>
-                        <button
-                          onClick={() => copyToClipboard(trip.salud.seguroPoliza, 'poliza_salud')}
-                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition cursor-pointer"
-                        >
-                          {copiedKey === 'poliza_salud' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedKey === 'poliza_salud' ? '¡Copiada!' : 'Copiar Póliza'}</span>
-                        </button>
-                      </div>
-
-                      {/* Botones de contacto de emergencia */}
-                      <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-                        {trip.salud.seguroTelefono && (
-                          <a
-                            href={`tel:${trip.salud.seguroTelefono.replace(/[^0-9+]/g, '')}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-sm"
-                          >
-                            <Phone className="w-3.5 h-3.5" /> 📞 Llamar en Extranjero ({trip.salud.seguroTelefono})
-                          </a>
-                        )}
-
-                        {trip.salud.seguroTelefonoOrigen && (
-                          <a
-                            href={`tel:${trip.salud.seguroTelefonoOrigen.replace(/[^0-9+]/g, '')}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 rounded-lg text-xs font-semibold transition"
-                          >
-                            <Phone className="w-3.5 h-3.5 text-cyan-400" /> 🏠 Desde Casa / País Origen ({trip.salud.seguroTelefonoOrigen})
-                          </a>
-                        )}
-
-                        {trip.salud.seguroEmail && (
-                          <a
-                            href={`mailto:${trip.salud.seguroEmail}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-200 border border-purple-500/30 rounded-lg text-xs font-semibold transition"
-                          >
-                            <Mail className="w-3.5 h-3.5 text-purple-400" /> ✉️ {trip.salud.seguroEmail}
-                          </a>
-                        )}
-                      </div>
-
-                      <div className="mt-2.5 p-2 bg-emerald-950/40 rounded-lg border border-emerald-500/20 text-[11px] text-emerald-300">
-                        💡 <strong>Consejo del Viajero:</strong> Antes de acudir por tu cuenta a cualquier clínica o posta, llama a la central de tu seguro para que ellos coordinen la clínica con convenio y no tengas que pagar nada en el lugar.
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-amber-300 mt-1">
-                      No has registrado seguro médico. Si requieres atención en {trip.pais}, deberás pagar en efectivo o tarjeta de crédito en el centro de salud.
-                    </p>
-                  )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-slate-400 text-[10px] block font-bold uppercase">🩸 Grupo Sanguíneo:</span>
+                  <strong className="text-white text-xs block mt-0.5">{trip.salud.tipoSangre || 'No especificado'}</strong>
                 </div>
-
-                {/* Urgencias y Ambulancia */}
-                <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block">Ambulancia y Hospital Cercano:</span>
-                  
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-                    <div>
-                      <span className="text-slate-400 text-[11px] block">Ambulancia Oficial en {trip.pais}:</span>
-                      <strong className="text-red-400 font-mono text-sm">{trip.salud.numeroAmbulanciaLocal}</strong>
-                    </div>
-                    <a
-                      href={`tel:${trip.salud.numeroAmbulanciaLocal.replace(/[^0-9]/g, '')}`}
-                      className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs"
-                    >
-                      Llamar Ambulancia
-                    </a>
-                  </div>
-
-                  <div className="text-xs text-slate-300 pt-1">
-                    <span className="text-slate-400 block text-[11px]">Centro Médico / Clínica más cercano al hotel:</span>
-                    <strong className="text-white block mt-0.5">{trip.salud.hospitalCercanoNombre || 'No especificado (averiguar al llegar)'}</strong>
-                    <p className="text-slate-300 text-[11px] mt-0.5">{trip.salud.hospitalCercanoDireccion}</p>
-                    {trip.salud.hospitalCercanoTelefono && (
-                      <p className="text-cyan-300 font-mono text-[11px] mt-0.5">Tel: {trip.salud.hospitalCercanoTelefono}</p>
-                    )}
-
-                    {/* Botones de acción rápida: Copiar dirección y Llamar */}
-                    <div className="mt-2.5 flex flex-wrap gap-2">
-                      {trip.salud.hospitalCercanoDireccion && (
-                        <button
-                          onClick={() => copyToClipboard(trip.salud.hospitalCercanoDireccion, 'dir_hospital')}
-                          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
-                        >
-                          {copiedKey === 'dir_hospital' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                          <span>{copiedKey === 'dir_hospital' ? '¡Dirección copiada!' : 'Copiar dirección para Uber / Waze'}</span>
-                        </button>
-                      )}
-
-                      {trip.salud.hospitalCercanoTelefono && (
-                        <a
-                          href={`tel:${trip.salud.hospitalCercanoTelefono.replace(/[^0-9+]/g, '')}`}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
-                        >
-                          <Phone className="w-3.5 h-3.5" />
-                          <span>Llamar al Centro Médico</span>
-                        </a>
-                      )}
-                    </div>
-                  </div>
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-amber-400 text-[10px] block font-bold uppercase">⚠️ Alergias Médicas / Alimentos:</span>
+                  <strong className="text-amber-200 text-xs block mt-0.5">{trip.salud.alergias || 'Ninguna conocida'}</strong>
                 </div>
-
-                {/* FICHA MÉDICA BÁSICA DEL VIAJERO */}
-                <div className="bg-gradient-to-br from-slate-950 via-slate-950 to-emerald-950/20 p-3.5 rounded-xl border border-emerald-500/30 space-y-2.5 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
-                      <Stethoscope className="w-3.5 h-3.5" />
-                      Ficha Médica Básica del Viajero
-                    </span>
-                    <button
-                      onClick={() => {
-                        setHealthForm(trip.salud);
-                        setIsEditingHealth(true);
-                      }}
-                      className="text-cyan-400 text-[11px] font-bold hover:underline cursor-pointer flex items-center gap-1"
-                    >
-                      <Edit3 className="w-3 h-3" /> Editar
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] text-slate-400 leading-tight">
-                    Datos vitales para mostrar en pantalla a paramédicos o doctores si viajas sola o en caso de desmayo/accidente:
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-                      <span className="text-slate-400 text-[10px] block font-bold uppercase">🩸 Grupo Sanguíneo:</span>
-                      <strong className="text-white text-xs block mt-0.5">{trip.salud.tipoSangre || 'No especificado'}</strong>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-                      <span className="text-amber-400 text-[10px] block font-bold uppercase">⚠️ Alergias Médicas / Alimentos:</span>
-                      <strong className="text-amber-200 text-xs block mt-0.5">{trip.salud.alergias || 'Ninguna conocida'}</strong>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-                      <span className="text-cyan-400 text-[10px] block font-bold uppercase">💊 Medicamentos de Uso Diario:</span>
-                      <strong className="text-cyan-200 text-xs block mt-0.5">{trip.salud.medicamentosDiarios || 'Ninguno'}</strong>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-                      <span className="text-slate-400 text-[10px] block font-bold uppercase">📋 Condiciones o Enfermedades:</span>
-                      <strong className="text-slate-200 text-xs block mt-0.5">{trip.salud.condicionesMedicas || 'Ninguna'}</strong>
-                    </div>
-                  </div>
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-cyan-400 text-[10px] block font-bold uppercase">💊 Medicamentos de Uso Diario:</span>
+                  <strong className="text-cyan-200 text-xs block mt-0.5">{trip.salud.medicamentosDiarios || 'Ninguno'}</strong>
                 </div>
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-slate-400 text-[10px] block font-bold uppercase">📋 Condiciones o Enfermedades:</span>
+                  <strong className="text-slate-200 text-xs block mt-0.5">{trip.salud.condicionesMedicas || 'Ninguna'}</strong>
+                </div>
+              </div>
+            </div>
 
-                {/* CONSEJO DE RESPALDO FÍSICO POR SI SE DESCARGA EL CELULAR */}
-                <div className="p-3.5 bg-gradient-to-r from-amber-950/30 via-slate-950 to-slate-950 rounded-xl border border-amber-500/40 text-xs text-slate-300 space-y-1.5 shadow-sm">
-                  <div className="flex items-center gap-2 text-amber-300 font-bold">
-                    <span className="text-base">📝</span>
-                    <span className="uppercase text-[11px] tracking-wider">Tip de Oro: El Respaldo Escrito en Papel</span>
+            {/* Fondos de Emergencia */}
+            {trip.salud.fondosEmergenciaNotas && (
+              <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800 text-xs">
+                <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Fondos de Emergencia Disponibles:</span>
+                <p className="text-slate-300 text-[11px]">{trip.salud.fondosEmergenciaNotas}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* --- PÁGINA 5: REGLAS DE ORO & TIPS DEL VIAJERO --- */}
+        {/* ========================================================================= */}
+        {activeTab === 'tips' && (
+          <div className="space-y-4">
+            {/* Header del Módulo */}
+            <div className="bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/40 border-2 border-amber-500/50 rounded-2xl p-4 shadow-xl">
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
+                <h2 className="text-base font-black text-white">Reglas de Oro & Tips del Viajero Experto</h2>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Lecciones esenciales de viajeros reales para evitar contratiempos, estafas y dolores de cabeza en el extranjero. Organizadas por momento clave:
+              </p>
+            </div>
+
+            {/* CATEGORÍA 1: EN EL AEROPUERTO & PASAJES */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                <Plane className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  1. En el Aeropuerto & Vuelos (Ojo Viajero)
+                </h3>
+              </div>
+
+              {/* Ojo viajero con el seguro en el pasaje */}
+              <div className="p-3 bg-slate-950/90 rounded-xl border border-amber-500/30 text-xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-amber-300">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Ojo con el "Seguro Contratado" que aparece en tu pasaje aéreo:</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  En los itinerarios de vuelos de muchas aerolíneas verás una mención que dice <em>"Seguro contratado"</em> con un número. <strong>Ese NO es el número de tu póliza médica</strong> con el que te atenderán en un hospital extranjero; es solo un código de reserva de la aerolínea. Tu póliza real de asistencia debes extraerla de tu certificado y registrarla en el módulo de <strong>Salud</strong>.
+                </p>
+              </div>
+
+              {/* Anticipación y Policía Internacional */}
+              <div className="p-3 bg-slate-950/90 rounded-xl border border-slate-800 text-xs space-y-1">
+                <strong className="text-white block font-bold">
+                  ⏰ Las 3 Horas Sagradas y Documentos en Mano:
+                </strong>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Llega con <strong>3 horas de anticipación</strong> a vuelos internacionales (2 horas en nacionales). Las filas en filtros de seguridad y Policía Internacional pueden colapsar en temporada alta. Ten siempre en mano tu cédula física o pasaporte vigente, sin doblar ni guardar al fondo de la mochila.
+                </p>
+              </div>
+
+              {/* Pantallas de embarque */}
+              <div className="p-3 bg-slate-950/90 rounded-xl border border-slate-800 text-xs space-y-1">
+                <strong className="text-white block font-bold">
+                  📺 Verifica siempre la Pantalla de Salidas en la Sala:
+                </strong>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  La puerta de embarque impresa en tu tarjeta de embarque es solo referencial y <strong>puede cambiar a última hora</strong>. Apenas cruces seguridad, busca las pantallas generales y reconfirma tu puerta real.
+                </p>
+              </div>
+            </div>
+
+            {/* CATEGORÍA 2: EN EL EQUIPAJE & MALETA */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                <Luggage className="w-4 h-4 text-amber-300" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  2. En el Equipaje & Maleta
+                </h3>
+              </div>
+
+              {/* REGLA DE ORO: DINERO Y TARJETAS SEPARADAS */}
+              <div className="bg-gradient-to-br from-amber-950/40 via-slate-950 to-slate-950 border-2 border-amber-500/70 rounded-xl p-3.5 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
+                    <Wallet className="w-4 h-4" />
                   </div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    Si tu celular se queda sin batería, se moja o se extravía en la calle, no podrás abrir esta app ni tus pasajes.
-                    <strong className="text-white block mt-1">
-                      Lleva siempre un papelito doblado en tu billetera física con:
+                  <div>
+                    <strong className="text-amber-200 text-xs font-black uppercase tracking-wide block">
+                      ¡Regla de Oro Indiscutible! Dinero, Tarjetas y Remedios contigo
                     </strong>
+                    <span className="text-[10px] text-amber-300/80">
+                      NUNCA los despaches a la bodega del avión
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  El dinero en efectivo, las tarjetas bancarias y tus medicamentos recetados diarios deben ir <strong>SIEMPRE en tu mochila o bolso de mano personal bajo tu asiento</strong>. Si la maleta de bodega se retrasa, se pierde o es vulnerada, tus pertenencias vitales estarán a salvo contigo.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-[11px]">
+                  <div className="p-2 bg-slate-900/90 rounded-lg border border-slate-800">
+                    <strong className="text-white block font-semibold">Gasto diario separado:</strong>
+                    <span className="text-slate-400">Lleva en tu bolsillo solo lo necesario para el día; deja el resto en la caja fuerte de tu alojamiento.</span>
+                  </div>
+                  <div className="p-2 bg-slate-900/90 rounded-lg border border-slate-800">
+                    <strong className="text-white block font-semibold">Respaldo de tarjetas:</strong>
+                    <span className="text-slate-400">Lleva dos tarjetas distintas y activa las compras internacionales antes de subir al avión.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Escalas y equipaje en tránsito */}
+              <div className="p-3 bg-slate-950/90 rounded-xl border border-slate-800 text-xs space-y-1">
+                <strong className="text-white block font-bold">
+                  🔄 Equipaje en Vuelos con Conexión / Escala:
+                </strong>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Al hacer el check-in en el mostrador del aeropuerto, pregunta siempre al agente: <em>"¿Mi maleta va directo al destino final o debo retirarla en la escala?"</em>. Si tienes cambio de aerolínea o escala en un país que exige control de aduanas intermedio (ej: EE.UU.), debes retirar la maleta y re-facturarla.
+                </p>
+              </div>
+            </div>
+
+            {/* CATEGORÍA 3: EN LA MOVILIDAD & SEGURIDAD URBANA */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                <Car className="w-4 h-4 text-cyan-300" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  3. En la Movilidad & Seguridad Urbana
+                </h3>
+              </div>
+
+              {/* ALERTA VITAL: NUNCA DEJAR LA MALETA CON DESCONOCIDOS */}
+              <div className="bg-gradient-to-r from-red-950 via-rose-950 to-red-950 border-2 border-red-500 rounded-xl p-3.5 space-y-2 text-red-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-red-600 text-white shrink-0">
+                    <AlertTriangle className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <span className="bg-red-500 text-white text-[9px] font-black uppercase px-1.5 py-0.5 rounded tracking-wider">
+                      ALERTA VITAL DE SEGURIDAD
+                    </span>
+                    <h4 className="font-black text-white text-xs sm:text-sm mt-0.5">
+                      ¡NUNCA dejes tu maleta o mochila con un desconocido!
+                    </h4>
+                  </div>
+                </div>
+                <p className="text-[11px] leading-relaxed text-red-100">
+                  Ni para ir al baño 2 minutos, ni para comprar un café, por muy amable, simpático o educado que parezca.
+                </p>
+                <div className="p-2 bg-black/40 rounded-lg border border-red-500/30 text-[10px] space-y-0.5">
+                  <p className="text-red-200">
+                    ⚖️ <strong>Regla penal internacional:</strong> Si la policía o aduana revisa tu equipaje y alguien introdujo una sustancia ilícita o prohibida, <strong>tú respondes ante la ley</strong> por todo lo que esté en tu bolso.
                   </p>
-                  <ul className="text-[11px] text-amber-200/90 list-disc list-inside space-y-0.5 pl-1">
-                    <li>Nombre exacto, dirección y teléfono del lugar donde te alojas (para mostrárselo a un taxista o policía local).</li>
-                    <li>Teléfono de contacto de tu familiar en casa y número de tu seguro de viaje.</li>
-                  </ul>
-                  <p className="text-[10px] text-slate-400 italic pt-0.5">
-                    Este sencillo papelito te salvará de cualquier apuro si te quedas incomunicada lejos del hotel.
+                  <p className="text-amber-300 font-bold pt-0.5">
+                    👉 Lleva siempre tu bolso contigo hasta dentro del baño o usa las consignas oficiales de la terminal.
                   </p>
                 </div>
+              </div>
 
-                {/* Nota de reembolso */}
-                {trip.salud.fondosEmergenciaNotas && (
-                  <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-[11px] text-slate-300">
-                    <strong className="text-slate-200 block mb-0.5">Nota de Fondo de Emergencia:</strong>
-                    {trip.salud.fondosEmergenciaNotas}
-                  </div>
-                )}
+              {/* Transporte oficial en aeropuertos */}
+              <div className="p-3 bg-slate-950/90 rounded-xl border border-slate-800 text-xs space-y-1">
+                <strong className="text-white block font-bold">
+                  🚕 Evita Captadores Informales en el Hall:
+                </strong>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Al salir de aduanas, ignora a personas que te ofrezcan "taxi barato" o "transporte directo" en el pasillo. Dirígete siempre a los <strong>counters oficiales en el interior</strong> o camina al punto señalizado de aplicaciones oficiales (Uber, etc.) para evitar cobros abusivos o paseos innecesarios.
+                </p>
+              </div>
+
+              {/* Mapas offline */}
+              <div className="p-3 bg-slate-950/90 rounded-xl border border-slate-800 text-xs space-y-1">
+                <strong className="text-white block font-bold">
+                  🗺️ Descarga el Mapa sin Conexión en tu Teléfono:
+                </strong>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  En Google Maps busca tu ciudad de destino y toca <em>"Descargar mapa sin conexión"</em> mientras tengas el WiFi del hotel. Si pierdes la señal en una carretera o playa apartada, el GPS seguirá guiándote sin gastar datos.
+                </p>
+              </div>
+            </div>
+
+            {/* CATEGORÍA 4: EN DOCUMENTOS & ASISTENCIA MÉDICA */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  4. En Documentos & Asistencia Médica
+                </h3>
+              </div>
+
+              {/* TIP DE ORO: EL RESPALDO ESCRITO EN PAPEL */}
+              <div className="bg-gradient-to-r from-amber-950/30 via-slate-950 to-slate-950 p-3.5 rounded-xl border border-amber-500/40 text-xs space-y-1.5">
+                <div className="flex items-center gap-2 text-amber-300 font-bold">
+                  <span className="text-base">📝</span>
+                  <span className="uppercase text-[11px] tracking-wider">Tip de Oro: El Respaldo Escrito en Papel</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Si tu celular se queda sin batería, se moja o se extravía en la calle, no podrás abrir esta app ni tus documentos digitales.
+                  <strong className="text-white block mt-1">
+                    Lleva siempre un papelito doblado en tu billetera física con:
+                  </strong>
+                </p>
+                <ul className="text-[11px] text-amber-200/90 list-disc list-inside space-y-0.5 pl-1">
+                  <li>Nombre y dirección completa de tu posada/hotel (para mostrárselo a un chofer o policía).</li>
+                  <li>Teléfono de contacto de tu familiar en casa y número de tu póliza de seguro de viaje.</li>
+                </ul>
+                <p className="text-[10px] text-slate-400 italic pt-0.5">
+                  Este sencillo papelito te salvará de cualquier apuro si te quedas incomunicada lejos del hotel.
+                </p>
+              </div>
+
+              {/* REGLA DE LAS 48 HORAS DEL SEGURO */}
+              <div className="p-3 bg-slate-950/90 rounded-xl border border-emerald-500/30 text-xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-300">
+                  <AlertCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Plazo de 48 Horas para Dar Aviso al Seguro:</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Ante la ocurrencia de cualquier síntoma médico, accidente o problema que requiera atención, existe un <strong>plazo máximo de 48 horas</strong> para notificar a la central de asistencia. Si no avisas a tiempo, la aseguradora puede rechazar coberturas o reembolsos.
+                </p>
+              </div>
+
+              {/* REGLA DEL HOTEL EN CASO DE EMERGENCIA GRAVE */}
+              <div className="p-3 bg-slate-950/90 rounded-xl border border-blue-500/30 text-xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-cyan-300">
+                  <span className="text-base">🛎️</span>
+                  <span>Regla del Hotel ante Emergencia Médica Grave:</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  Si tú o tu acompañante sufren una emergencia médica grave u hospitalización cerca de la fecha de regreso, <strong>NO hagas el check-out de inmediato</strong> dejando las pertenencias desamparadas. Notifica a la recepción para <strong>solicitar una extensión de cortesía por fuerza mayor</strong> o custodia segura mientras interviene el consulado o llega un familiar desde casa.
+                </p>
               </div>
             </div>
           </div>
@@ -2065,15 +2083,15 @@ export default function App() {
         BARRA FLOTANTE INFERIOR FIJA PARA CELULARES (sm:hidden):
         Garantiza que en teléfonos móviles los 4 botones estén siempre accesibles al alcance del pulgar.
       */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-2 py-1.5 shadow-2xl">
-        <div className="grid grid-cols-4 gap-1 max-w-md mx-auto">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-1.5 py-1.5 shadow-2xl">
+        <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
           <button
             onClick={() => {
-              setActiveTab('pasajes_seguro');
+              setActiveTab('pasajes');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className={`py-1.5 px-0.5 rounded-xl text-[10px] font-bold flex flex-col items-center justify-center gap-0.5 ${
-              activeTab === 'pasajes_seguro'
+              activeTab === 'pasajes'
                 ? 'bg-blue-600 text-white'
                 : 'text-slate-400 hover:text-white'
             }`}
@@ -2125,6 +2143,21 @@ export default function App() {
           >
             <Stethoscope className="w-4 h-4 text-emerald-400" />
             <span className="truncate">4. Salud</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('tips');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`py-1.5 px-0.5 rounded-xl text-[10px] font-bold flex flex-col items-center justify-center gap-0.5 ${
+              activeTab === 'tips'
+                ? 'bg-amber-500 text-slate-950 font-black'
+                : 'text-amber-300 hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span className="truncate">5. Reglas Oro</span>
           </button>
         </div>
       </nav>
@@ -2460,28 +2493,31 @@ export default function App() {
       {/* ========================================================================= */}
       {showSosModal && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl p-5 max-w-lg w-full shadow-2xl relative text-xs my-6">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl p-5 max-w-lg w-full shadow-2xl relative text-xs my-6 max-h-[92vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-black text-white text-base">Ficha de Emergencia y Consulado</h3>
+                <h3 className="font-black text-white text-base">Ficha SOS de Emergencia</h3>
               </div>
               <button
                 onClick={() => setShowSosModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg text-sm"
+                className="text-slate-400 hover:text-white p-1 rounded-lg text-sm cursor-pointer"
               >
                 ✕ Cerrar
               </button>
             </div>
 
-            <p className="text-[11px] text-slate-300 mt-2 mb-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-              Datos clave para asistencia médica crítica, contacto consular oficial o trámites con tu familia en casa.
+            <p className="text-[11px] text-slate-300 mt-2 mb-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800 shrink-0">
+              Los 4 datos vitales para resolver una emergencia médica, consular o de extravío en segundos:
             </p>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+              {/* 1. CONSULADO OFICIAL */}
               <div className="bg-slate-950 p-3.5 rounded-xl border border-blue-500/30">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 text-[10px] uppercase font-bold">Consulado Oficial en {trip.pais}:</span>
+                  <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
+                    <span>🏛️</span> Consulado Oficial en {trip.pais}:
+                  </span>
                   <button
                     onClick={() => {
                       setSosForm({
@@ -2494,7 +2530,7 @@ export default function App() {
                       setIsEditingSos(true);
                       setShowSosModal(false);
                     }}
-                    className="text-cyan-400 text-[11px] hover:underline"
+                    className="text-cyan-400 text-[11px] hover:underline cursor-pointer"
                   >
                     Editar datos
                   </button>
@@ -2504,19 +2540,43 @@ export default function App() {
                 <div className="mt-2.5">
                   <a
                     href={`tel:${trip.consuladoTelefono}`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition"
                   >
                     <Phone className="w-3.5 h-3.5" /> Llamar al Consulado ({trip.consuladoTelefono})
                   </a>
                 </div>
               </div>
 
-              {/* Hotel / Alojamiento (Dato Sagrado si te pierdes) */}
+              {/* 2. CONTACTO FAMILIAR EN CASA */}
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+                <span className="text-slate-400 text-[10px] uppercase font-bold block flex items-center gap-1">
+                  <span>🏠</span> Contacto Familiar en Casa:
+                </span>
+                <strong className="text-cyan-300 text-xs block mt-0.5">{trip.familiarNombre}</strong>
+                <div className="mt-2 flex items-center gap-2">
+                  <a
+                    href={`tel:${trip.familiarTelefono}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Llamar a Casa ({trip.familiarTelefono})</span>
+                  </a>
+                  <button
+                    onClick={() => copyToClipboard(trip.familiarTelefono, 'tel_familiar_sos')}
+                    className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs"
+                    title="Copiar teléfono"
+                  >
+                    {copiedKey === 'tel_familiar_sos' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. MI HOTEL / ALOJAMIENTO */}
               <div className="bg-slate-950 p-3.5 rounded-xl border border-amber-500/30">
                 <div className="flex items-center justify-between">
                   <span className="text-amber-400 text-[10px] uppercase font-bold flex items-center gap-1.5">
                     <Home className="w-3.5 h-3.5 text-amber-400" />
-                    Mi Hotel / Alojamiento (Dato Sagrado si te pierdes):
+                    Mi Hotel / Alojamiento (Para taxista o policía):
                   </span>
                   <button
                     onClick={() => {
@@ -2536,15 +2596,6 @@ export default function App() {
                 )}
                 
                 <div className="mt-2.5 flex flex-wrap gap-2">
-                  {trip.alojamiento.telefono && (
-                    <a
-                      href={`tel:${trip.alojamiento.telefono.replace(/[^0-9+]/g, '')}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition shadow-sm"
-                    >
-                      <Phone className="w-3.5 h-3.5" /> Llamar al Hotel ({trip.alojamiento.telefono})
-                    </a>
-                  )}
-
                   {trip.alojamiento.direccion && (
                     <button
                       onClick={() => copyToClipboard(trip.alojamiento.direccion, 'dir_hotel_sos')}
@@ -2554,85 +2605,78 @@ export default function App() {
                       <span>{copiedKey === 'dir_hotel_sos' ? '¡Dirección copiada!' : 'Copiar dirección para taxi'}</span>
                     </button>
                   )}
+                  {trip.alojamiento.telefono && (
+                    <a
+                      href={`tel:${trip.alojamiento.telefono.replace(/[^0-9+]/g, '')}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                    >
+                      <Phone className="w-3.5 h-3.5" /> Llamar al Hotel ({trip.alojamiento.telefono})
+                    </a>
+                  )}
                 </div>
               </div>
 
-              {/* Seguro de Asistencia Médica Internacional */}
-              {trip.salud.tieneSeguro && (
-                <div className="bg-slate-950 p-3.5 rounded-xl border border-emerald-500/30">
-                  <div className="flex items-center justify-between">
-                    <span className="text-emerald-400 text-[10px] uppercase font-bold flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      Seguro de Asistencia Médica 24h:
-                    </span>
-                    <span className="text-xs font-mono font-bold text-cyan-300">
-                      {trip.salud.seguroPoliza}
-                    </span>
-                  </div>
-                  <strong className="text-white text-xs block mt-1">{trip.salud.seguroCompania}</strong>
-                  <div className="mt-2.5 flex flex-wrap gap-2">
-                    {trip.salud.seguroTelefono && (
-                      <a
-                        href={`tel:${trip.salud.seguroTelefono.replace(/[^0-9+]/g, '')}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-sm"
-                      >
-                        <Phone className="w-3.5 h-3.5" /> Llamar en Extranjero ({trip.salud.seguroTelefono})
-                      </a>
-                    )}
-                    {trip.salud.seguroTelefonoOrigen && (
-                      <a
-                        href={`tel:${trip.salud.seguroTelefonoOrigen.replace(/[^0-9+]/g, '')}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 rounded-xl text-xs font-semibold transition"
-                      >
-                        <Phone className="w-3.5 h-3.5 text-cyan-400" /> Llamar desde Casa ({trip.salud.seguroTelefonoOrigen})
-                      </a>
-                    )}
-                  </div>
+              {/* 4. SEGURO DE ASISTENCIA MÉDICA */}
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-emerald-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-emerald-400 text-[10px] uppercase font-bold flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    Seguro de Asistencia Médica:
+                  </span>
+                  <span className="text-xs font-mono font-bold text-cyan-300">
+                    {trip.salud.seguroPoliza || 'Sin póliza'}
+                  </span>
                 </div>
-              )}
+                <strong className="text-white text-xs block">
+                  {trip.salud.seguroCompania || 'Seguro de Viaje Contratado'}
+                </strong>
 
-              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
-                <span className="text-slate-400 text-[10px] uppercase font-bold block">Contacto Familiar en Casa:</span>
-                <strong className="text-cyan-300 text-xs block mt-0.5">{trip.familiarNombre}</strong>
-                <div className="mt-2">
-                  <a
-                    href={`tel:${trip.familiarTelefono}`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium"
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {trip.salud.seguroTelefono && (
+                    <a
+                      href={`tel:${trip.salud.seguroTelefono.replace(/[^0-9+]/g, '')}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                    >
+                      <Phone className="w-3.5 h-3.5" /> Llamar Seguro ({trip.salud.seguroTelefono})
+                    </a>
+                  )}
+                  {trip.salud.seguroPoliza && (
+                    <button
+                      onClick={() => copyToClipboard(trip.salud.seguroPoliza, 'sos_poliza')}
+                      className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedKey === 'sos_poliza' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
+                      <span>{copiedKey === 'sos_poliza' ? '¡Copiada!' : 'Copiar Póliza'}</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t border-slate-800/80">
+                  <button
+                    onClick={() => {
+                      setShowSosModal(false);
+                      setActiveTab('salud');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="w-full py-2 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Llamar ({trip.familiarTelefono})</span>
-                  </a>
+                    <span>Ver Ficha y Protocolo Completo en Salud ➔</span>
+                  </button>
                 </div>
-              </div>
-
-              {/* Protocolo de Hotel en Emergencia Grave */}
-              <div className="bg-gradient-to-r from-blue-950/40 via-slate-950 to-slate-950 p-3.5 rounded-xl border border-blue-500/30 text-xs text-slate-300 space-y-1.5 shadow-sm">
-                <div className="flex items-center gap-2 text-cyan-300 font-bold">
-                  <span className="text-base">🛎️</span>
-                  <span className="uppercase text-[10px] tracking-wider">Regla de Hotel ante Emergencia Médica Grave:</span>
-                </div>
-                <p className="text-[11px] text-slate-200 leading-relaxed">
-                  Si tú o tu acompañante sufren una <strong>emergencia médica grave u hospitalización</strong> cerca de la fecha de regreso, <strong>NO hagas el check-out de inmediato</strong> dejando las pertenencias desamparadas.
-                </p>
-                <p className="text-[11px] text-cyan-200 font-medium">
-                  👉 Llama primero al seguro o notifica a la administración del hotel para <strong>solicitar una extensión de cortesía por fuerza mayor</strong> o custodia segura mientras interviene el consulado o llega un familiar.
-                </p>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+            <div className="mt-3 pt-3 border-t border-slate-800 flex justify-end shrink-0">
               <button
                 onClick={() => setShowSosModal(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold cursor-pointer"
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold cursor-pointer"
               >
                 Cerrar
               </button>
             </div>
           </div>
         </div>
-      )}
-
-      {/* ========================================================================= */}
+      )}{/* ========================================================================= */}
       {/* --- MODAL: EDITAR ALOJAMIENTO --- */}
       {/* ========================================================================= */}
       {isEditingLodging && (
@@ -3245,7 +3289,7 @@ export default function App() {
                 <input
                   type="text"
                   required
-                  placeholder="Ej: Assist Card, Universal Assistance, etc."
+                  placeholder="Escribe el nombre de tu aseguradora (Ej: Assist Card, Mapfre, Universal Assistance, Allianz, etc.)"
                   value={insuranceForm.compania}
                   onChange={(e) => setInsuranceForm({ ...insuranceForm, compania: e.target.value })}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-medium"
