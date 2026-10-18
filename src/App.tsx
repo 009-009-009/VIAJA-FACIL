@@ -42,171 +42,33 @@ import {
   ChevronRight,
   HelpCircle,
   Mail,
-  X
+  X,
+  Ticket,
+  ArrowRight
 } from 'lucide-react';
 
-// Estructura de Movilidad por Destino
-interface MobilityInfo {
-  llegadaAeropuerto: string;
-  appsYTransporte: string;
-  alquilerYConduccion: string;
-  mapasOffline: string;
-  costumbresDinero: string;
-}
-
-// Preset inteligente de país/ciudad
-interface DestinationPreset {
-  pais: string;
-  destinoDefault: string;
-  bandera: string;
-  moneda: string;
-  enchufe: string;
-  voltaje: string;
-  clima: string;
-  tipoViajeDefault: 'playa' | 'ciudad' | 'frio';
-  ambulancia: string;
-  consuladoDefault: string;
-  consuladoTelDefault: string;
-  consuladoDirDefault: string;
-  movilidad: MobilityInfo;
-}
-
-const DESTINATIONS: Record<string, DestinationPreset> = {
-  brasil: {
-    pais: 'Brasil',
-    destinoDefault: 'Florianópolis',
-    bandera: '🇧🇷',
-    moneda: 'Real Brasileño (BRL - R$)',
-    enchufe: 'Tipo N (3 patitas en rombo) y Tipo C',
-    voltaje: '220V en Florianópolis (ideal 100-240V)',
-    clima: 'Cálido y playero (27°C a 31°C). Chaparrones de 20 min en verano.',
-    tipoViajeDefault: 'playa',
-    ambulancia: '192 (SAMU Brasil)',
-    consuladoDefault: 'Consulado General de Chile en Florianópolis / Curitiba',
-    consuladoTelDefault: '+55 48 3028 9000',
-    consuladoDirDefault: 'Av. Beira Mar Norte, Florianópolis - SC',
-    movilidad: {
-      llegadaAeropuerto: 'Usa transporte oficial en el Aeropuerto Hercílio Luz: toma Uber en el punto de encuentro señalizado o taxis con tarifa prefijada en la ventanilla oficial interior. Nunca aceptes autos informales en el hall.',
-      appsYTransporte: 'En Brasil operan Uber y la aplicación local "99" (suele ser más económica que Uber). Para buses en la isla (sistema TICEN / Canasvieiras) se puede pagar con efectivo exacto o tarjeta de transporte.',
-      alquilerYConduccion: 'Tu licencia de conducir física chilena al día es 100% válida por convenio Mercosur. En verano hay alto tráfico en las vías hacia las playas del norte; respeta los radares de velocidad (lombadas electrónicas).',
-      mapasOffline: 'Antes de salir del hotel, abre Google Maps y descarga el mapa de Florianópolis sin conexión. En playas como Brava o Naufragados la señal de celular suele ser débil.',
-      costumbresDinero: 'En Brasil casi todo se paga con tarjeta contactless o débito internacional. Mantén billetes pequeños de 10 o 20 reales en efectivo para comprar caipirinhas o choclo en la arena y para peajes.'
-    }
-  },
-  espana: {
-    pais: 'España',
-    destinoDefault: 'Madrid',
-    bandera: '🇪🇸',
-    moneda: 'Euro (EUR - €)',
-    enchufe: 'Tipo C y F (2 patitas redondas europeas)',
-    voltaje: '230V (Frecuencia 50 Hz)',
-    clima: 'Mediterráneo/continental. Caluroso en verano, fresco/frío en invierno.',
-    tipoViajeDefault: 'ciudad',
-    ambulancia: '112 (Urgencias Sanitarias UE)',
-    consuladoDefault: 'Consulado General de Chile en Madrid',
-    consuladoTelDefault: '+34 91 308 0555',
-    consuladoDirDefault: 'Calle Rafael Calvo 18, Madrid',
-    movilidad: {
-      llegadaAeropuerto: 'Desde el Aeropuerto Adolfo Suárez Barajas tienes Metro (Línea 8 directa a Nuevos Ministerios), tren de Cercanías Renfe o Taxi oficial con tarifa plana fija de 33€ al centro de Madrid (no dejes que te cobren extras).',
-      appsYTransporte: 'El Metro de Madrid y la red de buses EMT son excepcionales. Compra en las máquinas la Tarjeta Multi recargable (sirve para 10 viajes). Para apps privadas operan Cabify, Uber y FreeNow (taxis regulados).',
-      alquilerYConduccion: 'En el centro de Madrid no conviene auto por las Zonas de Bajas Emisiones (ZBE) y multas automáticas con cámara. Si viajas a pueblos, tu licencia chilena es aceptada los primeros meses como turista, aunque se recomienda Licencia Internacional.',
-      mapasOffline: 'Descarga el mapa sin conexión en Google Maps o utiliza la app Citymapper para ver transbordos exactos de metro y bus en tiempo real.',
-      costumbresDinero: 'El pago con tarjeta (contactless) se acepta desde 1 euro en panaderías y taxis. Los billetes de 100€ o más son difíciles de cambiar en comercios pequeños; pide billetes de 20€ o 50€ al cambiar.'
-    }
-  },
-  estados_unidos: {
-    pais: 'Estados Unidos',
-    destinoDefault: 'Miami, Florida',
-    bandera: '🇺🇸',
-    moneda: 'Dólar Estadounidense (USD - $)',
-    enchufe: 'Tipo A y B (2 clavijas planas paralelas con/sin tierra)',
-    voltaje: '120V (Frecuencia 60 Hz - verificar que diga 100-240V)',
-    clima: 'Cálido y húmedo (28°C a 33°C). Chaparrones tropicales repentinos en verano.',
-    tipoViajeDefault: 'playa',
-    ambulancia: '911 (Emergencias Generales)',
-    consuladoDefault: 'Consulado General de Chile en Miami',
-    consuladoTelDefault: '+1 305 373 8623',
-    consuladoDirDefault: '800 Brickell Ave, Miami, FL',
-    movilidad: {
-      llegadaAeropuerto: 'En Miami (MIA), sigue las señales hacia MIA Mover para ir al centro de autos de alquiler (Rental Car Center) o sube al segundo piso para el punto de recogida de Uber o Lyft.',
-      appsYTransporte: 'Uber y Lyft son las apps indispensables y funcionan en minutos. En Miami Beach está el trolley gratuito y en Downtown el Metromover elevado sin costo.',
-      alquilerYConduccion: 'En Florida el auto es casi obligatorio. Tu licencia chilena vigente es aceptada para arrendar. Ojo: casi todas las autopistas (Turnpike, Dolphin Expressway) tienen peaje electrónico (SunPass / Toll-by-Plate).',
-      mapasOffline: 'Descarga siempre el mapa en Google Maps. Las salidas de las autopistas de 5 carriles son muy rápidas y si pierdes la señal podrías pasarte de largo.',
-      costumbresDinero: 'Uso del 100% con tarjeta. El efectivo casi no se usa. En restaurantes la propina ("tip") del 18% al 20% es costumbre cultural obligatoria (a veces ya viene sugerida en la cuenta).'
-    }
-  },
-  argentina: {
-    pais: 'Argentina',
-    destinoDefault: 'Buenos Aires',
-    bandera: '🇦🇷',
-    moneda: 'Peso Argentino (ARS - $)',
-    enchufe: 'Tipo I (3 patas planas en V) y Tipo C',
-    voltaje: '220V (Frecuencia 50 Hz)',
-    clima: 'Veranos calurosos y húmedos (28°C a 34°C); inviernos templados y frescos.',
-    tipoViajeDefault: 'ciudad',
-    ambulancia: '107 (SAME)',
-    consuladoDefault: 'Consulado General de Chile en Buenos Aires',
-    consuladoTelDefault: '+54 11 4331 6228',
-    consuladoDirDefault: 'Diagonal Norte 832, CABA',
-    movilidad: {
-      llegadaAeropuerto: 'Desde Ezeiza toma Tienda León (bus seguro hasta Retiro) o contrata taxi en las cabinas oficiales dentro de la terminal (Taxi Ezeiza). En Aeroparque (AEP) puedes pedir Uber o taxi de la parada reglamentada.',
-      appsYTransporte: 'Cabify, Uber y Didi funcionan fluidamente. Para colectivos (buses) y Subte (metro) es obligatoria la tarjeta plástica SUBE (puedes comprarla en kioscos o estaciones de tren).',
-      alquilerYConduccion: 'Licencia chilena física válida por convenio Mercosur. En Buenos Aires el tráfico y el estacionamiento céntrico son complejos, por lo que es mucho mejor moverse en subte o apps.',
-      mapasOffline: 'Descarga el mapa de la Ciudad de Buenos Aires en Google Maps o la app oficial BA Cómo Llego.',
-      costumbresDinero: 'Para turistas chilenos, pagar con tarjetas de débito/crédito aplica la cotización favorable MEP. Si llevas efectivo (dólares), cámbialos en casas de cambio autorizadas.'
-    }
-  },
-  colombia: {
-    pais: 'Colombia',
-    destinoDefault: 'Cartagena de Indias',
-    bandera: '🇨🇴',
-    moneda: 'Peso Colombiano (COP - $)',
-    enchufe: 'Tipo A y B (patas planas tipo americano)',
-    voltaje: '110V (Frecuencia 60 Hz)',
-    clima: 'Tropical cálido y húmedo (30°C promedio). Brisa marina.',
-    tipoViajeDefault: 'playa',
-    ambulancia: '123 (Emergencias Nacionales)',
-    consuladoDefault: 'Consulado General de Chile en Bogotá / Colombia',
-    consuladoTelDefault: '+57 601 742 4110',
-    consuladoDirDefault: 'Calle 100 No. 11B-27, Bogotá',
-    movilidad: {
-      llegadaAeropuerto: 'En el Aeropuerto de Cartagena pide tu tiquete oficial de taxi en el tótem de la salida con el valor exacto impreso según tu hotel para evitar sobreprecios.',
-      appsYTransporte: 'En Colombia funcionan Uber, InDrive, Cabify y Didi. En Cartagena dentro de la Ciudad Amurallada todo se hace caminando a pie de forma hermosa.',
-      alquilerYConduccion: 'No se recomienda alquilar auto para turismo en centros históricos por congestión y falta de estacionamientos.',
-      mapasOffline: 'Descarga el mapa de la ciudad en Google Maps antes de pasear por Getsemaní y Bocagrande.',
-      costumbresDinero: 'Manejan billetes de alta denominación (miles de pesos). Ten siempre billetes de 2.000, 5.000 y 10.000 COP para propinas y jugos naturales en la calle.'
-    }
-  },
-  peru: {
-    pais: 'Perú',
-    destinoDefault: 'Cusco / Lima',
-    bandera: '🇵🇪',
-    moneda: 'Sol Peruano (PEN - S/)',
-    enchufe: 'Tipo A y C (universal plano y redondo)',
-    voltaje: '220V (Frecuencia 60 Hz)',
-    clima: 'En Cusco clima andino seco (días templados 19°C, noches frías 4°C).',
-    tipoViajeDefault: 'ciudad',
-    ambulancia: '106 (SAMU Perú)',
-    consuladoDefault: 'Consulado General de Chile en Lima',
-    consuladoTelDefault: '+51 1 710 2200',
-    consuladoDirDefault: 'Av. Javier Prado Oeste 790, San Isidro, Lima',
-    movilidad: {
-      llegadaAeropuerto: 'En Lima usa Taxi Green o Taxi Directo desde el counter oficial. En Cusco coordina el transfer con tu hotel o usa taxis de la terminal con tarifa acordada previa.',
-      appsYTransporte: 'Uber y Cabify operan en Lima y zonas céntricas de Cusco. En Cusco para Machu Picchu el tren (PeruRail / Inca Rail) debe reservarse con anticipación.',
-      alquilerYConduccion: 'No es aconsejable arrendar auto en ciudades por el estilo de conducción y altura en la sierra; el servicio de chofer o taxi es muy económico.',
-      mapasOffline: 'Fundamental descargar mapas offline para el Valle Sagrado donde la cobertura móvil es intermitente.',
-      costumbresDinero: 'Importante: En Perú NO aceptan billetes rotos, doblados o rayados (ni soles ni dólares). Revisa siempre que te entreguen billetes en perfecto estado.'
-    }
-  }
-};
+import {
+  DESTINATIONS,
+  type DestinationPreset,
+  type MobilityInfo,
+  findCountryPreset
+} from './data/destinations';
 
 interface SimpleBooking {
   id: string;
-  tipo: 'vuelo' | 'seguro' | 'transporte';
+  tipo: 'vuelo' | 'transporte' | 'seguro';
+  tramoTipo?: 'ida' | 'vuelta' | 'escala' | 'interno';
   titulo: string;
-  codigo: string;
+  codigo: string; // Código de Reserva / Localizador / PNR
+  numeroVuelo?: string; // N° de vuelo (ej: "JA 560", "LA 402")
+  aerolinea?: string;
+  origen?: string;
+  destino?: string;
+  asiento?: string;
+  terminalPuerta?: string;
   fecha: string;
   hora: string;
+  horaLlegada?: string;
   escala?: string;
   maletaDirecta?: boolean;
   telefonoContacto?: string;
@@ -230,8 +92,10 @@ interface HealthInfo {
   seguroCompania: string;
   seguroPoliza: string;
   seguroTelefono: string; // En el extranjero
-  seguroTelefonoOrigen?: string; // Desde tu país / Chile
+  seguroTelefonoOrigen?: string; // Desde tu país / Casa
   seguroEmail?: string; // Correo de asistencia médica
+  seguroFechaInicio?: string; // Fecha de inicio de cobertura
+  seguroFechaFin?: string; // Fecha de término de cobertura
   hospitalCercanoNombre: string;
   hospitalCercanoDireccion: string;
   hospitalCercanoTelefono: string;
@@ -257,6 +121,7 @@ interface SimpleTrip {
   destino: string;
   paisKey: string;
   pais: string;
+  bandera?: string;
   fechaSalida: string;
   fechaRegreso: string;
   moneda: string;
@@ -280,10 +145,11 @@ interface SimpleTrip {
 const DEFAULT_TRIP: SimpleTrip = {
   id: 'florianopolis-viaja-facil-v10',
   nombre: 'Vacaciones en Florianópolis, Brasil',
-  origen: 'Santiago de Chile',
+  origen: 'Santiago', 
   destino: 'Florianópolis',
   paisKey: 'brasil',
   pais: 'Brasil',
+  bandera: '🇧🇷',
   fechaSalida: '2026-12-23',
   fechaRegreso: '2026-12-30',
   moneda: DESTINATIONS.brasil.moneda,
@@ -306,11 +172,13 @@ const DEFAULT_TRIP: SimpleTrip = {
   movilidad: DESTINATIONS.brasil.movilidad,
   salud: {
     tieneSeguro: true,
-    seguroCompania: 'Asistencia Médica de Viaje',
+    seguroCompania: 'Seguro de Viaje Internacional',
     seguroPoliza: 'POL-BR-99120',
     seguroTelefono: '+55 11 3132 1000',
     seguroTelefonoOrigen: '+56 2 2897 5000',
     seguroEmail: 'asistencia@seguroviaje.com',
+    seguroFechaInicio: '2025-12-26',
+    seguroFechaFin: '2026-01-01',
     hospitalCercanoNombre: 'UPA 24h Canasvieiras (Urgencias Públicas)',
     hospitalCercanoDireccion: 'Rua Francisco Faustino dos Santos, Canasvieiras',
     hospitalCercanoTelefono: '+55 48 3266 0149',
@@ -325,27 +193,20 @@ const DEFAULT_TRIP: SimpleTrip = {
     {
       id: 'pas-1',
       tipo: 'vuelo',
-      titulo: 'Vuelo JetSmart Santiago ➔ Florianópolis',
+      tramoTipo: 'ida',
+      titulo: 'JetSmart - Santiago ➔ Florianópolis',
       codigo: '13N7JY',
+      numeroVuelo: 'JA 560',
+      origen: 'Santiago (SCL)',
+      destino: 'Florianópolis (FLN)',
+      asiento: '12C',
+      terminalPuerta: 'T2 - Puerta 14',
       fecha: '2026-12-23',
       hora: '07:45 AM',
-      escala: 'Vuelo directo (Sin escalas)',
+      horaLlegada: '11:15 AM',
+      escala: undefined,
       maletaDirecta: true,
-      telefonoContacto: '+56 2 2731 8787',
-      notas: 'Llegada al Aeropuerto Hercílio Luz (FLN).'
-    },
-    {
-      id: 'pas-2',
-      tipo: 'seguro',
-      titulo: 'Póliza de Asistencia Médica Internacional',
-      codigo: 'POL-BR-99120',
-      fecha: '2026-12-23 al 2026-12-30',
-      hora: 'Cobertura 24 horas',
-      telefonoContacto: '+55 11 3132 1000',
-      telefonoDestino: '+55 11 3132 1000',
-      telefonoOrigen: '+56 2 2897 5000',
-      emailContacto: 'asistencia@seguroviaje.com',
-      notas: 'Llamar antes de acudir al centro médico para coordinación directa sin pagar de tu bolsillo.'
+      notas: 'Llegada directa al Aeropuerto Hercílio Luz (FLN).'
     }
   ],
   equipaje: [
@@ -378,9 +239,12 @@ export default function App() {
         return {
           ...DEFAULT_TRIP,
           ...parsed,
+          pasajesYDocumentos: (parsed.pasajesYDocumentos || []).filter((d: any) => d.tipo !== 'seguro'),
           salud: {
             ...DEFAULT_TRIP.salud,
-            ...(parsed.salud || {})
+            ...(parsed.salud || {}),
+            seguroFechaInicio: parsed.salud?.seguroFechaInicio || DEFAULT_TRIP.salud.seguroFechaInicio,
+            seguroFechaFin: parsed.salud?.seguroFechaFin || DEFAULT_TRIP.salud.seguroFechaFin
           }
         };
       } catch (e) {
@@ -402,20 +266,135 @@ export default function App() {
 
   // Modales
   const [isAddingBooking, setIsAddingBooking] = useState(false);
-  const [newBookingType, setNewBookingType] = useState<'vuelo' | 'seguro' | 'transporte'>('vuelo');
+  const [isEditingInsuranceModal, setIsEditingInsuranceModal] = useState(false);
+  const [newBookingType, setNewBookingType] = useState<'vuelo' | 'transporte'>('vuelo');
+  const [newBookingTramoTipo, setNewBookingTramoTipo] = useState<'ida' | 'vuelta' | 'escala' | 'interno'>('ida');
   const [newBookingTitle, setNewBookingTitle] = useState('');
   const [newBookingCode, setNewBookingCode] = useState('');
+  const [newBookingNumeroVuelo, setNewBookingNumeroVuelo] = useState('');
+  const [newBookingOrigen, setNewBookingOrigen] = useState('');
+  const [newBookingDestino, setNewBookingDestino] = useState('');
+  const [newBookingAsiento, setNewBookingAsiento] = useState('');
+  const [newBookingTerminalPuerta, setNewBookingTerminalPuerta] = useState('');
   const [newBookingDate, setNewBookingDate] = useState('');
   const [newBookingTime, setNewBookingTime] = useState('');
+  const [newBookingHoraLlegada, setNewBookingHoraLlegada] = useState('');
   const [newBookingHasLayover, setNewBookingHasLayover] = useState(false);
   const [newBookingLayoverInfo, setNewBookingLayoverInfo] = useState('');
   const [newBookingBagDirect, setNewBookingBagDirect] = useState(true);
-  const [newBookingPhone, setNewBookingPhone] = useState('');
-  const [newBookingPhoneDestino, setNewBookingPhoneDestino] = useState('');
-  const [newBookingPhoneOrigen, setNewBookingPhoneOrigen] = useState('');
-  const [newBookingEmail, setNewBookingEmail] = useState('');
-  const [newBookingSyncHealth, setNewBookingSyncHealth] = useState(true);
   const [newBookingFile, setNewBookingFile] = useState<{ name: string; url: string } | null>(null);
+  const [autoFillSuccessMsg, setAutoFillSuccessMsg] = useState<string | null>(null);
+
+  // Modal seguro dedicado
+  const [insuranceForm, setInsuranceForm] = useState({
+    compania: trip.salud.seguroCompania || 'Assist Card',
+    poliza: trip.salud.seguroPoliza || 'POL-99218-BR',
+    fechaInicio: trip.salud.seguroFechaInicio || '2025-12-26',
+    fechaFin: trip.salud.seguroFechaFin || '2026-01-01',
+    telefonoDestino: trip.salud.seguroTelefono || '+55 11 3132 1000',
+    telefonoOrigen: trip.salud.seguroTelefonoOrigen || '+56 2 2897 5000',
+    email: trip.salud.seguroEmail || 'asistencias@seguroviaje.com'
+  });
+
+  const openAddBookingModal = () => {
+    setNewBookingType('vuelo');
+    setNewBookingTramoTipo('ida');
+    setNewBookingTitle('JetSmart');
+    setNewBookingCode('');
+    setNewBookingNumeroVuelo('');
+    setNewBookingOrigen('Santiago (SCL)');
+    setNewBookingDestino('Florianópolis (FLN)');
+    setNewBookingAsiento('');
+    setNewBookingTerminalPuerta('');
+    setNewBookingDate('2026-12-23');
+    setNewBookingTime('07:45');
+    setNewBookingHoraLlegada('11:15');
+    setNewBookingHasLayover(false);
+    setNewBookingLayoverInfo('');
+    setNewBookingBagDirect(true);
+    setNewBookingFile(null);
+    setAutoFillSuccessMsg(null);
+    setIsAddingBooking(true);
+  };
+
+  const openEditInsuranceModal = () => {
+    setInsuranceForm({
+      compania: trip.salud.seguroCompania || 'Assist Card',
+      poliza: trip.salud.seguroPoliza || 'POL-99218-BR',
+      fechaInicio: trip.salud.seguroFechaInicio || '2025-12-26',
+      fechaFin: trip.salud.seguroFechaFin || '2026-01-01',
+      telefonoDestino: trip.salud.seguroTelefono || '+55 11 3132 1000',
+      telefonoOrigen: trip.salud.seguroTelefonoOrigen || '+56 2 2897 5000',
+      email: trip.salud.seguroEmail || 'asistencias@seguroviaje.com'
+    });
+    setIsEditingInsuranceModal(true);
+  };
+
+  const handleTicketFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const fileObj = {
+          name: file.name,
+          url: reader.result as string
+        };
+        setNewBookingFile(fileObj);
+
+        // Intento de auto-detección inteligente por nombre de archivo
+        const name = file.name.toUpperCase();
+        let flightFound = '';
+        let codeFound = '';
+        let airlineFound = '';
+
+        const flightMatch = name.match(/([A-Z0-9]{2,3})\s?[-_]?\s?(\d{3,4})/);
+        if (flightMatch) {
+          flightFound = `${flightMatch[1]} ${flightMatch[2]}`;
+        }
+
+        const pnrMatch = name.match(/\b([A-Z0-9]{6})\b/);
+        if (pnrMatch && !/VUELOS|PASAJE|TICKET|ITINER|IMAGEN|CAMERA/i.test(pnrMatch[1])) {
+          codeFound = pnrMatch[1];
+        }
+
+        if (name.includes('LATAM')) airlineFound = 'LATAM Airlines';
+        else if (name.includes('JETSMART')) airlineFound = 'JetSmart';
+        else if (name.includes('SKY')) airlineFound = 'Sky Airline';
+        else if (name.includes('GOL')) airlineFound = 'Gol Linhas Aéreas';
+
+        if (flightFound) setNewBookingNumeroVuelo(flightFound);
+        if (codeFound) setNewBookingCode(codeFound);
+        if (airlineFound) setNewBookingTitle(airlineFound);
+        if (name.includes('VUELTA') || name.includes('REGRESO')) setNewBookingTramoTipo('vuelta');
+
+        setAutoFillSuccessMsg(
+          flightFound || codeFound
+            ? `✨ ¡Datos detectados del pasaje! N° Vuelo: ${flightFound || 'Revisar'}, Código Reserva: ${codeFound || 'Revisar'}. Hemos rellenado los campos por ti.`
+            : `📸 Archivo "${file.name}" cargado exitosamente. Puedes usar el botón de auto-completar o ingresar los datos libremente.`
+        );
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleApplySampleTicket = () => {
+    setNewBookingType('vuelo');
+    setNewBookingTramoTipo('ida');
+    setNewBookingTitle('JetSmart');
+    setNewBookingNumeroVuelo('JA 560');
+    setNewBookingCode('13N7JY');
+    setNewBookingOrigen('Santiago de Chile (SCL)');
+    setNewBookingDestino('Florianópolis (FLN)');
+    setNewBookingDate('2026-12-23');
+    setNewBookingTime('07:45');
+    setNewBookingHoraLlegada('11:15');
+    setNewBookingAsiento('12C');
+    setNewBookingTerminalPuerta('T2 - Puerta 14');
+    setNewBookingHasLayover(false);
+    setAutoFillSuccessMsg('✨ ¡Datos de pasaje auto-completados exitosamente! Revisa los campos y pulsa Guardar.');
+  };
+
+
 
   const [isEditingLodging, setIsEditingLodging] = useState(false);
   const [lodgingForm, setLodgingForm] = useState<LodgingInfo>(trip.alojamiento);
@@ -434,15 +413,131 @@ export default function App() {
     consuladoDireccion: trip.consuladoDireccion
   });
 
-  // Estado para Personalizar Destino a Mano
-  const [isCustomizingCountry, setIsCustomizingCountry] = useState(false);
-  const [customDestinationForm, setCustomDestinationForm] = useState({
+  // Estados para Selección y Personalización de Destino (País + Ciudad separados)
+  const [targetCountryKey, setTargetCountryKey] = useState<string>(trip.paisKey || 'brasil');
+  const [targetCity, setTargetCity] = useState<string>(trip.destino || 'Florianópolis');
+  const [countrySearchQuery, setCountrySearchQuery] = useState<string>('');
+  const [isCustomCountryMode, setIsCustomCountryMode] = useState<boolean>(false);
+  const [customCountryForm, setCustomCountryForm] = useState({
     pais: '',
-    destino: '',
     moneda: '',
     enchufe: '',
-    clima: ''
+    voltaje: '',
+    clima: '',
+    ambulancia: ''
   });
+  const [isEditingAdvancedDetails, setIsEditingAdvancedDetails] = useState<boolean>(false);
+  const [manualCurrencyOverride, setManualCurrencyOverride] = useState<string>('');
+  const [manualEnchufeOverride, setManualEnchufeOverride] = useState<string>('');
+
+  const openChangeDestinationModal = () => {
+    setTargetCountryKey(trip.paisKey || 'brasil');
+    setTargetCity(trip.destino || 'Florianópolis');
+    setCountrySearchQuery('');
+    setIsEditingAdvancedDetails(false);
+    setManualCurrencyOverride('');
+    setManualEnchufeOverride('');
+
+    if (trip.paisKey === 'custom') {
+      setIsCustomCountryMode(true);
+      setCustomCountryForm({
+        pais: trip.pais,
+        moneda: trip.moneda,
+        enchufe: trip.enchufe,
+        voltaje: trip.voltaje,
+        clima: trip.clima,
+        ambulancia: trip.salud.numeroAmbulanciaLocal
+      });
+    } else {
+      setIsCustomCountryMode(false);
+    }
+    setShowChangeCountryModal(true);
+  };
+
+  const handleSelectCountryInModal = (countryKey: string) => {
+    setTargetCountryKey(countryKey);
+    setIsCustomCountryMode(false);
+    const preset = DESTINATIONS[countryKey];
+    if (preset) {
+      const prevPreset = DESTINATIONS[targetCountryKey];
+      // Si la ciudad estaba vacía o era el valor por defecto del país anterior, sugerir la nueva
+      if (!targetCity.trim() || (prevPreset && targetCity === prevPreset.destinoDefault)) {
+        setTargetCity(preset.destinoDefault);
+      }
+    }
+  };
+
+  const handleApplyDestination = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    if (isCustomCountryMode) {
+      const matched = findCountryPreset(customCountryForm.pais);
+      const finalCountry = customCountryForm.pais.trim() || (matched ? matched.pais : 'Destino Internacional');
+      const finalCity = targetCity.trim() || (matched ? matched.destinoDefault : finalCountry);
+      const finalMoneda = manualCurrencyOverride.trim() || customCountryForm.moneda.trim() || (matched ? matched.moneda : 'Moneda Local / Dólar USD');
+      const finalEnchufe = manualEnchufeOverride.trim() || customCountryForm.enchufe.trim() || (matched ? matched.enchufe : 'Adaptador Universal (Tipo A, C o G)');
+      const finalVoltaje = customCountryForm.voltaje.trim() || (matched ? matched.voltaje : '110V - 240V');
+      const finalAmbulancia = customCountryForm.ambulancia.trim() || (matched ? matched.ambulancia : '112 / 911 (Emergencias)');
+      const finalClima = customCountryForm.clima.trim() || (matched ? matched.clima : 'Clima de temporada');
+
+      setTrip((prev) => ({
+        ...prev,
+        paisKey: matched ? (Object.keys(DESTINATIONS).find((k) => DESTINATIONS[k].pais === matched.pais) || 'custom') : 'custom',
+        pais: finalCountry,
+        destino: finalCity,
+        bandera: matched ? matched.bandera : '🌍',
+        nombre: `Viaje a ${finalCity}, ${finalCountry}`,
+        moneda: finalMoneda,
+        enchufe: finalEnchufe,
+        voltaje: finalVoltaje,
+        clima: finalClima,
+        consuladoNombre: matched ? matched.consuladoDefault : `Consulado / Embajada en ${finalCountry}`,
+        consuladoTelefono: matched ? matched.consuladoTelDefault : '+1 800 000 000',
+        consuladoDireccion: matched ? matched.consuladoDirDefault : `Capital de ${finalCountry}`,
+        movilidad: matched ? matched.movilidad : {
+          llegadaAeropuerto: `Usa transporte oficial autorizado en el aeropuerto o terminal de ${finalCity}. Evita transportes informales.`,
+          appsYTransporte: `Averigua si en ${finalCountry} opera Uber u otra app local y cómo funciona el pago de buses/metro.`,
+          alquilerYConduccion: `Consulta si exigen Licencia de Conducir Internacional o si basta tu licencia nacional en ${finalCountry}.`,
+          mapasOffline: `Descarga el mapa sin conexión de ${finalCity} en Google Maps antes de salir del hotel.`,
+          costumbresDinero: `Lleva una parte en efectivo de ${finalMoneda} y activa tus tarjetas de débito/crédito para compras en el extranjero.`
+        },
+        salud: {
+          ...prev.salud,
+          numeroAmbulanciaLocal: finalAmbulancia
+        }
+      }));
+    } else {
+      const preset = DESTINATIONS[targetCountryKey] || DESTINATIONS.brasil;
+      const finalCity = targetCity.trim() || preset.destinoDefault;
+      const finalMoneda = manualCurrencyOverride.trim() || preset.moneda;
+      const finalEnchufe = manualEnchufeOverride.trim() || preset.enchufe;
+
+      setTrip((prev) => ({
+        ...prev,
+        paisKey: targetCountryKey,
+        pais: preset.pais,
+        destino: finalCity,
+        bandera: preset.bandera,
+        nombre: `Viaje a ${finalCity}, ${preset.pais}`,
+        moneda: finalMoneda,
+        enchufe: finalEnchufe,
+        voltaje: preset.voltaje,
+        clima: preset.clima,
+        tipoViaje: preset.tipoViajeDefault,
+        consuladoNombre: preset.consuladoDefault,
+        consuladoTelefono: preset.consuladoTelDefault,
+        consuladoDireccion: preset.consuladoDirDefault,
+        movilidad: preset.movilidad,
+        salud: {
+          ...prev.salud,
+          numeroAmbulanciaLocal: preset.ambulancia
+        }
+      }));
+      setPackDestinationType(preset.tipoViajeDefault);
+    }
+
+    setShowChangeCountryModal(false);
+  };
 
   useEffect(() => {
     localStorage.setItem('viaja_facil_simple_v10', JSON.stringify(trip));
@@ -475,65 +570,6 @@ export default function App() {
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  // Cambio DINÁMICO de País y Destino predeterminado
-  // ¡Actualiza automáticamente Moneda, Clima, Enchufe, Ambulancia, Consulado Y la Guía de Movilidad Completa!
-  const handleSelectCountryPreset = (countryKey: string) => {
-    const preset = DESTINATIONS[countryKey];
-    if (!preset) return;
-
-    setTrip((prev) => ({
-      ...prev,
-      paisKey: countryKey,
-      pais: preset.pais,
-      destino: preset.destinoDefault,
-      nombre: `Viaje a ${preset.destinoDefault}, ${preset.pais}`,
-      moneda: preset.moneda,
-      enchufe: preset.enchufe,
-      voltaje: preset.voltaje,
-      clima: preset.clima,
-      tipoViaje: preset.tipoViajeDefault,
-      consuladoNombre: preset.consuladoDefault,
-      consuladoTelefono: preset.consuladoTelDefault,
-      consuladoDireccion: preset.consuladoDirDefault,
-      movilidad: preset.movilidad,
-      salud: {
-        ...prev.salud,
-        numeroAmbulanciaLocal: preset.ambulancia
-      }
-    }));
-
-    setPackDestinationType(preset.tipoViajeDefault);
-    setShowChangeCountryModal(false);
-  };
-
-  // Guardar destino personalizado manual
-  const handleSaveCustomDestination = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customDestinationForm.pais || !customDestinationForm.destino) return;
-
-    setTrip((prev) => ({
-      ...prev,
-      paisKey: 'custom',
-      pais: customDestinationForm.pais,
-      destino: customDestinationForm.destino,
-      nombre: `Viaje a ${customDestinationForm.destino}, ${customDestinationForm.pais}`,
-      moneda: customDestinationForm.moneda || 'Moneda Local',
-      enchufe: customDestinationForm.enchufe || 'Revisar tipo de clavija',
-      voltaje: 'Consultar voltaje local',
-      clima: customDestinationForm.clima || 'Clima de temporada',
-      movilidad: {
-        llegadaAeropuerto: `Usa transporte oficial autorizado en el aeropuerto o terminal de ${customDestinationForm.destino}. Evita captadores no autorizados.`,
-        appsYTransporte: `Averigua si en ${customDestinationForm.pais} opera Uber u otra app local de transporte y cómo funciona el pago de buses/metro.`,
-        alquilerYConduccion: `Consulta si exigen Licencia de Conducir Internacional o si basta tu licencia nacional para conducir en ${customDestinationForm.pais}.`,
-        mapasOffline: `Descarga el mapa sin conexión de ${customDestinationForm.destino} en Google Maps antes de salir del hotel.`,
-        costumbresDinero: `Lleva una parte en efectivo de ${customDestinationForm.moneda || 'moneda local'} y activa tus tarjetas de débito/crédito para el extranjero.`
-      }
-    }));
-
-    setIsCustomizingCountry(false);
-    setShowChangeCountryModal(false);
   };
 
   const handleGenerateSmartPacking = () => {
@@ -617,53 +653,77 @@ export default function App() {
 
   const handleAddBooking = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBookingTitle.trim() || !newBookingCode.trim()) return;
+    if (!newBookingCode.trim()) return;
 
-    const isSeguro = newBookingType === 'seguro';
+    const computedTitle = newBookingTitle.trim() || (newBookingType === 'vuelo'
+      ? `${newBookingNumeroVuelo ? newBookingNumeroVuelo + ' - ' : ''}${newBookingOrigen || 'Origen'} ➔ ${newBookingDestino || 'Destino'}`
+      : 'Traslado Terrestre');
+
+    const isConnectionLeg = newBookingType === 'vuelo' && newBookingTramoTipo === 'escala';
+    const hasLayover = newBookingType === 'vuelo' && (isConnectionLeg || newBookingHasLayover);
+    const computedEscala = hasLayover
+      ? (newBookingLayoverInfo.trim() || (isConnectionLeg ? 'Conexión / Escala' : 'Con escala'))
+      : undefined;
+
     const newBooking: SimpleBooking = {
       id: `booking-${Date.now()}`,
       tipo: newBookingType,
-      titulo: newBookingTitle.trim(),
-      codigo: newBookingCode.trim(),
-      fecha: newBookingDate || (isSeguro ? 'Durante todo el viaje' : 'Fecha por confirmar'),
-      hora: newBookingTime || (isSeguro ? 'Cobertura 24 horas' : ''),
-      escala: newBookingType === 'vuelo' ? (newBookingHasLayover ? (newBookingLayoverInfo.trim() || 'Con escala') : 'Vuelo directo') : undefined,
-      maletaDirecta: newBookingType === 'vuelo' ? (newBookingHasLayover ? newBookingBagDirect : true) : undefined,
-      telefonoContacto: isSeguro ? (newBookingPhoneDestino.trim() || newBookingPhoneOrigen.trim() || newBookingPhone.trim() || undefined) : (newBookingPhone.trim() || undefined),
-      telefonoDestino: isSeguro ? (newBookingPhoneDestino.trim() || undefined) : undefined,
-      telefonoOrigen: isSeguro ? (newBookingPhoneOrigen.trim() || undefined) : undefined,
-      emailContacto: isSeguro ? (newBookingEmail.trim() || undefined) : undefined,
-      notas: isSeguro ? 'Llamar a la aseguradora antes de acudir a una clínica para coordinar tu atención.' : undefined,
+      tramoTipo: newBookingType === 'vuelo' ? newBookingTramoTipo : undefined,
+      titulo: computedTitle,
+      codigo: newBookingCode.trim().toUpperCase(),
+      numeroVuelo: newBookingType === 'vuelo' ? (newBookingNumeroVuelo.trim().toUpperCase() || undefined) : undefined,
+      origen: newBookingOrigen.trim() || undefined,
+      destino: newBookingDestino.trim() || undefined,
+      asiento: newBookingAsiento.trim() || undefined,
+      terminalPuerta: newBookingTerminalPuerta.trim() || undefined,
+      fecha: newBookingDate || 'Fecha por confirmar',
+      hora: newBookingTime || '',
+      horaLlegada: newBookingHoraLlegada || '',
+      escala: computedEscala,
+      maletaDirecta: hasLayover ? newBookingBagDirect : true,
       archivoNombre: newBookingFile?.name,
       archivoDataUrl: newBookingFile?.url
     };
 
     setTrip((prev) => ({
       ...prev,
-      pasajesYDocumentos: [...prev.pasajesYDocumentos, newBooking],
-      salud: (isSeguro && newBookingSyncHealth) ? {
-        ...prev.salud,
-        tieneSeguro: true,
-        seguroCompania: newBookingTitle.trim(),
-        seguroPoliza: newBookingCode.trim(),
-        seguroTelefono: newBookingPhoneDestino.trim() || newBookingPhone.trim() || prev.salud.seguroTelefono,
-        seguroTelefonoOrigen: newBookingPhoneOrigen.trim() || prev.salud.seguroTelefonoOrigen,
-        seguroEmail: newBookingEmail.trim() || prev.salud.seguroEmail
-      } : prev.salud
+      pasajesYDocumentos: [...prev.pasajesYDocumentos, newBooking]
     }));
 
     setIsAddingBooking(false);
     setNewBookingTitle('');
     setNewBookingCode('');
+    setNewBookingNumeroVuelo('');
+    setNewBookingOrigen('');
+    setNewBookingDestino('');
+    setNewBookingAsiento('');
+    setNewBookingTerminalPuerta('');
     setNewBookingDate('');
     setNewBookingTime('');
+    setNewBookingHoraLlegada('');
     setNewBookingHasLayover(false);
     setNewBookingLayoverInfo('');
-    setNewBookingPhone('');
-    setNewBookingPhoneDestino('');
-    setNewBookingPhoneOrigen('');
-    setNewBookingEmail('');
     setNewBookingFile(null);
+    setAutoFillSuccessMsg(null);
+  };
+
+  const handleSaveInsuranceModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTrip((prev) => ({
+      ...prev,
+      salud: {
+        ...prev.salud,
+        tieneSeguro: true,
+        seguroCompania: insuranceForm.compania.trim() || 'Seguro de Viaje',
+        seguroPoliza: insuranceForm.poliza.trim().toUpperCase(),
+        seguroFechaInicio: insuranceForm.fechaInicio,
+        seguroFechaFin: insuranceForm.fechaFin,
+        seguroTelefono: insuranceForm.telefonoDestino.trim(),
+        seguroTelefonoOrigen: insuranceForm.telefonoOrigen.trim(),
+        seguroEmail: insuranceForm.email.trim()
+      }
+    }));
+    setIsEditingInsuranceModal(false);
   };
 
   const deleteBooking = (id: string) => {
@@ -735,7 +795,7 @@ export default function App() {
 
           <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={() => setShowChangeCountryModal(true)}
+              onClick={openChangeDestinationModal}
               className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
               title="Cambiar país o destino"
             >
@@ -823,19 +883,19 @@ export default function App() {
             <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950/50 border border-slate-800 rounded-2xl p-4 shadow-xl">
               <div className="flex items-center justify-between gap-2 mb-1.5">
                 <span className="text-xs font-bold text-cyan-400 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" /> {trip.origen} ➔ {trip.destino}, {trip.pais}
+                  <MapPin className="w-4 h-4 text-cyan-400 shrink-0" /> <span>{trip.origen}</span> <span className="text-slate-500">➔</span> <span className="text-white font-extrabold">{trip.destino}</span> <span className="text-slate-400">({trip.pais})</span> <span className="text-base">{trip.bandera}</span>
                 </span>
                 <button
-                  onClick={() => setShowChangeCountryModal(true)}
+                  onClick={openChangeDestinationModal}
                   className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 rounded-lg text-[11px] font-bold flex items-center gap-1 border border-amber-500/30 cursor-pointer transition"
                 >
-                  <Globe2 className="w-3 h-3" /> Cambiar Destino
+                  <Globe2 className="w-3.5 h-3.5" /> Cambiar País o Ciudad
                 </button>
               </div>
 
               <h2 className="text-base sm:text-lg font-black text-white">{trip.nombre}</h2>
               <p className="text-xs text-slate-300 mt-1">
-                Contacto familiar en Chile: <strong className="text-cyan-300">{trip.familiarNombre} ({trip.familiarTelefono})</strong>
+                Contacto familiar en casa: <strong className="text-cyan-300">{trip.familiarNombre} ({trip.familiarTelefono})</strong>
               </p>
 
               <div className="mt-3 pt-3 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs">
@@ -853,197 +913,516 @@ export default function App() {
               </div>
             </div>
 
-            {/* Listado de Pasajes y Seguro */}
+            {/* Listado de Pasajes y Traslados */}
             <div className="flex items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-bold text-white">Pasajes de Vuelo &amp; Póliza de Seguro</h3>
-                <p className="text-xs text-slate-400">Ten a mano tus códigos, información de escalas y comprobantes.</p>
+                <h3 className="text-sm font-bold text-white">Pasajes de Vuelo &amp; Traslados</h3>
+                <p className="text-xs text-slate-400">Ten a mano tus códigos de reserva, escalas y comprobantes.</p>
               </div>
               <button
-                onClick={() => setIsAddingBooking(true)}
+                onClick={openAddBookingModal}
                 className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition shadow cursor-pointer shrink-0"
               >
-                <Plus className="w-4 h-4" /> Agregar
+                <Plus className="w-4 h-4" /> Agregar Pasaje
               </button>
             </div>
 
-            <div className="space-y-3">
-              {trip.pasajesYDocumentos.map((doc) => (
-                <div
-                  key={doc.id}
-                  className={`border rounded-2xl p-4 shadow-md transition ${
-                    doc.tipo === 'seguro'
-                      ? 'bg-slate-900/90 border-emerald-500/40'
-                      : doc.tipo === 'transporte'
-                      ? 'bg-slate-900/90 border-amber-500/40'
-                      : 'bg-slate-900 border-slate-800'
-                  }`}
+            {/* Tarjetas de Vuelos y Traslados */}
+            {trip.pasajesYDocumentos.filter((d) => d.tipo !== 'seguro').length === 0 ? (
+              <div className="bg-slate-900/60 border border-dashed border-slate-800 rounded-2xl p-5 text-center text-xs text-slate-400">
+                <Plane className="w-6 h-6 mx-auto mb-1.5 text-slate-600" />
+                <p className="font-semibold text-slate-300">No tienes pasajes de vuelo ni traslados agregados aún.</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">Guarda tu código de reserva, horarios y confirmación de vuelo.</p>
+                <button
+                  onClick={openAddBookingModal}
+                  className="mt-2.5 px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-cyan-300 border border-blue-500/40 rounded-xl font-bold text-xs inline-flex items-center gap-1.5 transition cursor-pointer"
                 >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <div className="flex items-center gap-2">
-                      {doc.tipo === 'vuelo' ? (
-                        <div className="w-7 h-7 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
-                          <Plane className="w-4 h-4 text-cyan-400" />
+                  <Plus className="w-3.5 h-3.5" /> + Agregar primer pasaje o traslado
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {trip.pasajesYDocumentos
+                  .filter((doc) => doc.tipo !== 'seguro')
+                  .map((doc) => (
+                    <div
+                      key={doc.id}
+                      className={`border rounded-2xl p-4 shadow-md transition ${
+                        doc.tipo === 'transporte'
+                          ? 'bg-slate-900/90 border-amber-500/40'
+                          : 'bg-slate-900 border-cyan-500/30'
+                      }`}
+                    >
+                      {/* Header de la tarjeta con Tipo, Tramo y Eliminar */}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          {doc.tipo === 'vuelo' ? (
+                            <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                              <Plane className="w-4 h-4 text-cyan-400" />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
+                              <Bus className="w-4 h-4 text-amber-400" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-black text-white text-sm">{doc.titulo}</span>
+                              {doc.tipo === 'vuelo' ? (
+                                <>
+                                  <span
+                                    className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                                      doc.tramoTipo === 'ida'
+                                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                                        : doc.tramoTipo === 'vuelta'
+                                        ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                                        : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                    }`}
+                                  >
+                                    {doc.tramoTipo === 'ida'
+                                      ? '🛫 Vuelo de Ida'
+                                      : doc.tramoTipo === 'vuelta'
+                                      ? '🛬 Vuelo de Regreso'
+                                      : '🔄 Conexión / Escala'}
+                                  </span>
+                                  {doc.tramoTipo !== 'escala' && (!doc.escala || doc.escala.toLowerCase().includes('directo') || doc.escala.toLowerCase().includes('sin escala')) && (
+                                    <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                      🟢 Vuelo directo
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                                  🚌 Traslado / Bus
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      ) : doc.tipo === 'seguro' ? (
-                        <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+
+                        <button
+                          onClick={() => deleteBooking(doc.id)}
+                          className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                          title="Eliminar este pasaje"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Cuadro Destacado con Códigos Clave (Vuelo y Reserva) */}
+                      {doc.tipo === 'vuelo' ? (
+                        <div className="grid grid-cols-2 gap-2 mt-2.5">
+                          {/* NÚMERO DE VUELO (el que anuncian en el aeropuerto) */}
+                          <div className="bg-slate-950 p-2.5 rounded-xl border border-cyan-500/40 flex flex-col justify-between">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-cyan-400 font-bold uppercase flex items-center gap-1">
+                                  <Plane className="w-3 h-3" /> N° de Vuelo
+                                </span>
+                                {doc.numeroVuelo && (
+                                  <button
+                                    onClick={() => copyToClipboard(doc.numeroVuelo!, `flight-${doc.id}`)}
+                                    className="text-[10px] text-cyan-400 hover:underline font-bold cursor-pointer"
+                                  >
+                                    {copiedKey === `flight-${doc.id}` ? '✓ Copiado' : 'Copiar'}
+                                  </button>
+                                )}
+                              </div>
+                              <strong className="text-base sm:text-lg font-black text-white font-mono tracking-wider block mt-1">
+                                {doc.numeroVuelo || 'No especificado'}
+                              </strong>
+                            </div>
+                            <span className="text-[9px] text-slate-400 mt-1 block">
+                              El que sale en pantallas y altavoces
+                            </span>
+                          </div>
+
+                          {/* CÓDIGO DE RESERVA / PNR (el de 6 letras para check-in) */}
+                          <div className="bg-slate-950 p-2.5 rounded-xl border border-blue-500/40 flex flex-col justify-between">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-blue-400 font-bold uppercase flex items-center gap-1">
+                                  <Ticket className="w-3 h-3" /> Código Reserva (PNR)
+                                </span>
+                                <button
+                                  onClick={() => copyToClipboard(doc.codigo, doc.id)}
+                                  className="text-[10px] text-blue-400 hover:underline font-bold cursor-pointer"
+                                >
+                                  {copiedKey === doc.id ? '✓ Copiado' : 'Copiar'}
+                                </button>
+                              </div>
+                              <strong className="text-base sm:text-lg font-black text-cyan-300 font-mono tracking-widest block mt-1">
+                                {doc.codigo}
+                              </strong>
+                            </div>
+                            <span className="text-[9px] text-slate-400 mt-1 block">
+                              Para tu check-in online o counter
+                            </span>
+                          </div>
                         </div>
                       ) : (
-                        <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                          <Bus className="w-4 h-4 text-amber-400" />
+                        /* Cuadro para Bus / Traslado */
+                        <div className="bg-slate-950 p-2.5 rounded-xl border border-amber-500/40 flex items-center justify-between mt-2.5">
+                          <div>
+                            <span className="text-[10px] text-amber-400 font-bold uppercase block">
+                              🎫 Código de Billete / Voucher
+                            </span>
+                            <strong className="text-base font-black text-amber-300 font-mono tracking-wider block mt-0.5">
+                              {doc.codigo}
+                            </strong>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(doc.codigo, doc.id)}
+                            className="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                          >
+                            {copiedKey === doc.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedKey === doc.id ? '¡Copiado!' : 'Copiar'}</span>
+                          </button>
                         </div>
                       )}
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-white text-sm">{doc.titulo}</span>
-                          <span
-                            className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
-                              doc.tipo === 'seguro'
-                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                : doc.tipo === 'transporte'
-                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                            }`}
-                          >
-                            {doc.tipo === 'seguro' ? 'Seguro Médico' : doc.tipo === 'transporte' ? 'Traslado / Bus' : 'Vuelo'}
+
+                      {/* Trayecto, Fechas y Asiento */}
+                      <div className="text-xs text-slate-300 space-y-1.5 mt-2.5 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                        {(doc.origen || doc.destino) && (
+                          <div className="flex items-center gap-1.5 font-semibold text-white">
+                            <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                            <span>
+                              {doc.origen || 'Origen'} ➔ {doc.destino || 'Destino'}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap items-center gap-3 text-slate-300 text-[11px]">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" /> {doc.fecha}
                           </span>
+                          {doc.hora && (
+                            <span className="flex items-center gap-1 text-cyan-300 font-semibold">
+                              <Clock className="w-3.5 h-3.5" /> Salida: {doc.hora}
+                            </span>
+                          )}
+                          {doc.horaLlegada && (
+                            <span className="text-slate-400">
+                              (Llegada estimada: {doc.horaLlegada})
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-black px-2.5 py-1 rounded bg-blue-500/20 text-cyan-300 border border-blue-500/40">
-                        {doc.codigo}
-                      </span>
-                      <button
-                        onClick={() => deleteBooking(doc.id)}
-                        className="text-slate-500 hover:text-rose-400 p-1 cursor-pointer transition"
-                        title="Eliminar este ítem"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
 
-                  <div className="text-xs text-slate-300 flex flex-wrap items-center gap-3 mt-2">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" /> {doc.fecha}
-                    </span>
-                    {doc.hora && (
-                      <span className="flex items-center gap-1 text-cyan-300">
-                        <Clock className="w-3.5 h-3.5" /> {doc.hora}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Escala (si es vuelo) */}
-                  {doc.escala && (
-                    <div className="mt-2.5 p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-xs">
-                      <div className="flex items-center gap-1.5 text-amber-300 font-semibold">
-                        <CornerDownRight className="w-3.5 h-3.5" />
-                        <span>{doc.escala}</span>
+                        {(doc.asiento || doc.terminalPuerta) && (
+                          <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-slate-800 text-[11px] text-amber-300">
+                            {doc.asiento && (
+                              <span>💺 Asiento: <strong>{doc.asiento}</strong></span>
+                            )}
+                            {doc.terminalPuerta && (
+                              <span>🚪 {doc.terminalPuerta}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-1 pl-5">
-                        {doc.maletaDirecta ? (
-                          <span className="text-emerald-400 font-medium">✓ Tu equipaje facturado va directo al destino final (no lo retiras en la escala).</span>
-                        ) : (
-                          <span className="text-amber-400 font-medium">⚠️ Debes retirar tu maleta en la escala y volver a facturarla.</span>
+
+                      {/* Escala o Conexión (SOLO si realmente tiene escala o es tramo de conexión) */}
+                      {doc.tipo === 'vuelo' && (
+                        (doc.escala && !doc.escala.toLowerCase().includes('directo') && !doc.escala.toLowerCase().includes('sin escala')) ||
+                        doc.tramoTipo === 'escala'
+                      ) && (
+                        <div className="mt-2.5 p-2.5 bg-slate-950 rounded-xl border border-amber-500/30 text-xs">
+                          <div className="flex items-center gap-1.5 text-amber-300 font-semibold">
+                            <CornerDownRight className="w-3.5 h-3.5 shrink-0" />
+                            <span>
+                              {doc.tramoTipo === 'escala'
+                                ? (doc.escala ? `Conexión / Escala: ${doc.escala}` : 'Tramo de conexión / escala')
+                                : `Escala: ${doc.escala}`}
+                            </span>
+                          </div>
+                          <div className="text-[11px] mt-1 pl-5">
+                            {doc.maletaDirecta ? (
+                              <span className="text-emerald-400 font-medium">
+                                ✓ {doc.tramoTipo === 'escala'
+                                  ? 'Tu equipaje viene transferido directo (no lo retiras en esta conexión).'
+                                  : 'Tu equipaje facturado va directo al destino final (no lo retiras en la escala).'}
+                              </span>
+                            ) : (
+                              <span className="text-amber-400 font-medium">
+                                ⚠️ {doc.tramoTipo === 'escala'
+                                  ? 'Debes retirar tu equipaje y volver a facturarlo para este tramo.'
+                                  : 'Debes retirar tu equipaje en la escala y volver a facturarlo.'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Archivo comprobante adjunto */}
+                      {doc.archivoNombre && (
+                        <div className="mt-2.5 p-2 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2 text-cyan-300 font-medium truncate">
+                            <FileText className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{doc.archivoNombre}</span>
+                          </div>
+                          {doc.archivoDataUrl && (
+                            <button
+                              onClick={() =>
+                                setPreviewDoc({
+                                  title: doc.titulo,
+                                  url: doc.archivoDataUrl!,
+                                  isPdf: doc.archivoNombre!.toLowerCase().endsWith('.pdf')
+                                })
+                              }
+                              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded text-[11px] font-bold flex items-center gap-1 shrink-0 cursor-pointer"
+                            >
+                              <Eye className="w-3 h-3" /> Ver comprobante
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Botones de acción rápida: Copiar Códigos (¡Sin teléfonos inútiles para pilotos o buses!) */}
+                      <div className="mt-3 flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => copyToClipboard(doc.codigo, doc.id)}
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                        >
+                          {copiedKey === doc.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedKey === doc.id ? '¡Código copiado!' : 'Copiar código de reserva'}</span>
+                        </button>
+                        {doc.numeroVuelo && (
+                          <button
+                            onClick={() => copyToClipboard(doc.numeroVuelo!, `btn-${doc.id}`)}
+                            className="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-cyan-300 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer border border-cyan-800/50"
+                          >
+                            {copiedKey === `btn-${doc.id}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Plane className="w-3.5 h-3.5" />}
+                            <span>{copiedKey === `btn-${doc.id}` ? '¡Vuelo copiado!' : `Copiar N° ${doc.numeroVuelo}`}</span>
+                          </button>
                         )}
                       </div>
                     </div>
-                  )}
+                  ))}
+              </div>
+            )}
 
-                  {/* Tip de seguro si es póliza */}
-                  {doc.tipo === 'seguro' && doc.notas && (
-                    <div className="mt-2.5 p-2.5 bg-emerald-950/40 rounded-xl border border-emerald-500/30 text-xs text-emerald-200 flex items-start gap-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                      <div className="text-[11px] leading-relaxed">
-                        <strong className="text-emerald-300 block font-bold mb-0.5">Regla de Oro en caso de Enfermedad o Accidente:</strong>
-                        {doc.notas}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Archivo comprobante adjunto */}
-                  {doc.archivoNombre && (
-                    <div className="mt-2.5 p-2 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 text-cyan-300 font-medium truncate">
-                        <FileText className="w-4 h-4 shrink-0" />
-                        <span className="truncate">{doc.archivoNombre}</span>
-                      </div>
-                      {doc.archivoDataUrl && (
-                        <button
-                          onClick={() =>
-                            setPreviewDoc({
-                              title: doc.titulo,
-                              url: doc.archivoDataUrl!,
-                              isPdf: doc.archivoNombre!.toLowerCase().endsWith('.pdf')
-                            })
-                          }
-                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded text-[11px] font-bold flex items-center gap-1 shrink-0 cursor-pointer"
-                        >
-                          <Eye className="w-3 h-3" /> Ver comprobante
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Botones de acción rápida: Copiar código, Llamar Extranjero, Llamar Chile, Email */}
-                  <div className="mt-3 flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={() => copyToClipboard(doc.codigo, doc.id)}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      {copiedKey === doc.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedKey === doc.id ? '¡Código copiado!' : (doc.tipo === 'seguro' ? 'Copiar Póliza' : 'Copiar código')}</span>
-                    </button>
-
-                    {/* Teléfono Extranjero */}
-                    {doc.telefonoDestino && (
-                      <a
-                        href={`tel:${doc.telefonoDestino.replace(/[^0-9+]/g, '')}`}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition shadow-sm"
-                      >
-                        <Phone className="w-3.5 h-3.5" />
-                        <span>📞 Llamar en Extranjero ({doc.telefonoDestino})</span>
-                      </a>
-                    )}
-
-                    {/* Teléfono Origen / Chile */}
-                    {doc.telefonoOrigen && (
-                      <a
-                        href={`tel:${doc.telefonoOrigen.replace(/[^0-9+]/g, '')}`}
-                        className="px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
-                      >
-                        <Phone className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>🇨🇱 Desde Chile / País Origen ({doc.telefonoOrigen})</span>
-                      </a>
-                    )}
-
-                    {/* Teléfono genérico si no están los dos anteriores */}
-                    {doc.telefonoContacto && !doc.telefonoDestino && !doc.telefonoOrigen && (
-                      <a
-                        href={`tel:${doc.telefonoContacto.replace(/[^0-9+]/g, '')}`}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
-                      >
-                        <Phone className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Llamar ({doc.telefonoContacto})</span>
-                      </a>
-                    )}
-
-                    {/* Correo Asistencia */}
-                    {doc.emailContacto && (
-                      <a
-                        href={`mailto:${doc.emailContacto}`}
-                        className="px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-200 border border-purple-500/30 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
-                      >
-                        <Mail className="w-3.5 h-3.5 text-purple-400" />
-                        <span>✉️ {doc.emailContacto}</span>
-                      </a>
-                    )}
+            {/* ========================================================================= */}
+            {/* --- SECCIÓN DEDICADA: ¿VIAJAS CON SEGURO DE VIAJE? --- */}
+            {/* ========================================================================= */}
+            {/* ========================================================================= */}
+            <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
+              <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      ¿Viajas con Seguro de Viaje?
+                    </h3>
+                    <span className="text-[11px] text-slate-400 block">
+                      Cubre urgencias médicas, hospitalización, demoras y pérdida de equipaje.
+                    </span>
                   </div>
                 </div>
-              ))}
+
+                {/* Toggle SÍ / NO */}
+                <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setTrip((prev) => ({ ...prev, salud: { ...prev.salud, tieneSeguro: true } }))}
+                    className={`px-3.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                      trip.salud.tieneSeguro
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    SÍ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTrip((prev) => ({ ...prev, salud: { ...prev.salud, tieneSeguro: false } }))}
+                    className={`px-3.5 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
+                      !trip.salud.tieneSeguro
+                        ? 'bg-rose-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    NO
+                  </button>
+                </div>
+              </div>
+
+              {/* Si la respuesta es SÍ: Despliegue de los datos de la aseguradora */}
+              {trip.salud.tieneSeguro ? (
+                <div className="space-y-3">
+                  {/* Tarjeta de la Aseguradora */}
+                  <div className="bg-slate-950/90 p-4 rounded-xl border border-emerald-500/30 space-y-3">
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
+                          Compañía Aseguradora:
+                        </span>
+                        <strong className="text-white text-base font-bold block mt-0.5">
+                          {trip.salud.seguroCompania || 'Seguro de Viaje'}
+                        </strong>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <span className="text-xs text-slate-300 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                            N° Póliza / Voucher: <strong className="text-emerald-300">{trip.salud.seguroPoliza || 'Sin registrar'}</strong>
+                          </span>
+                          <button
+                            onClick={() => copyToClipboard(trip.salud.seguroPoliza || '', 'poliza-main')}
+                            className="text-[11px] text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            {copiedKey === 'poliza-main' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                            <span>{copiedKey === 'poliza-main' ? '¡Póliza copiada!' : 'Copiar'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={openEditInsuranceModal}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700 flex items-center gap-1.5 cursor-pointer transition shadow-sm shrink-0"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Editar Seguro</span>
+                      </button>
+                    </div>
+
+                    {/* Fechas de vigencia de la póliza */}
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2 text-xs text-slate-300">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>
+                        Vigencia de Cobertura: <strong className="text-white">{trip.salud.seguroFechaInicio || '26/12/2025'}</strong> al <strong className="text-white">{trip.salud.seguroFechaFin || '01/01/2026'}</strong>
+                      </span>
+                    </div>
+
+                    {/* Canales de Asistencia: Extranjero, Casa y Email */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                      {/* Teléfono Extranjero */}
+                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                          📞 Llamar en el Extranjero (desde donde viajas):
+                        </span>
+                        {trip.salud.seguroTelefono ? (
+                          <a
+                            href={`tel:${trip.salud.seguroTelefono.replace(/[^0-9+]/g, '')}`}
+                            className="text-emerald-400 font-mono font-bold hover:underline flex items-center gap-1.5 text-xs"
+                          >
+                            <Phone className="w-3.5 h-3.5 shrink-0" />
+                            <span>{trip.salud.seguroTelefono}</span>
+                          </a>
+                        ) : (
+                          <span className="text-slate-500 italic">No registrado</span>
+                        )}
+                        <span className="text-[10px] text-slate-400 block mt-1">
+                          Llamada local en destino con chip de viaje o roaming.
+                        </span>
+                      </div>
+
+                      {/* Teléfono País de Origen / Casa */}
+                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                          🏠 Llamar desde tu País de Origen (Casa):
+                        </span>
+                        {trip.salud.seguroTelefonoOrigen ? (
+                          <a
+                            href={`tel:${trip.salud.seguroTelefonoOrigen.replace(/[^0-9+]/g, '')}`}
+                            className="text-cyan-400 font-mono font-bold hover:underline flex items-center gap-1.5 text-xs"
+                          >
+                            <Phone className="w-3.5 h-3.5 shrink-0" />
+                            <span>{trip.salud.seguroTelefonoOrigen}</span>
+                          </a>
+                        ) : (
+                          <span className="text-slate-500 italic">No registrado</span>
+                        )}
+                        <span className="text-[10px] text-slate-400 block mt-1">
+                          Para llamadas directas tuyas o para que tu familia coordine desde casa.
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Correo Electrónico de la Aseguradora */}
+                    {trip.salud.seguroEmail && (
+                      <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 truncate">
+                          <Mail className="w-4 h-4 text-purple-400 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[10px] text-slate-400 uppercase font-bold block">Correo de Asistencia Médica:</span>
+                            <span className="text-purple-300 font-mono font-bold truncate">{trip.salud.seguroEmail}</span>
+                          </div>
+                        </div>
+                        <a
+                          href={`mailto:${trip.salud.seguroEmail}`}
+                          className="px-2.5 py-1 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 rounded-lg text-xs font-semibold shrink-0"
+                        >
+                          Enviar correo
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recuadro de Oro de la Póliza: Instrucciones Vitales */}
+                  <div className="p-3.5 bg-gradient-to-r from-amber-950/30 via-slate-950 to-slate-950 rounded-xl border border-amber-500/40 text-xs space-y-2.5 text-slate-200">
+                    <div className="flex items-center gap-2 text-amber-300 font-bold">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span className="text-xs uppercase tracking-wide">Protocolo de Oro ante Emergencias (Reglas de la Póliza):</span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      <strong className="text-white">Se recuerda que siempre se debe llamar a la central de asistencia</strong> ante la necesidad de requerir algún servicio médico. Hay un <strong className="text-amber-300">plazo de 48 horas</strong> para dar aviso a la central de operaciones desde que suceden los síntomas o accidente para coordinar la atención y evitar pagar de tu bolsillo.
+                    </p>
+
+                    <div className="p-2.5 bg-slate-900/90 rounded-lg border border-slate-800 text-[11px] space-y-1">
+                      <strong className="text-amber-200 block font-bold">📋 Para coordinar las coberturas, te pedirán:</strong>
+                      <ul className="list-disc list-inside text-slate-300 space-y-0.5 pl-1">
+                        <li>Nombre del paciente y documento de identidad (RUT / Pasaporte).</li>
+                        <li>Fecha de nacimiento y dirección exacta donde se encuentra.</li>
+                        <li>Teléfono y email de contacto.</li>
+                        <li>Síntomas o problema de salud detallado.</li>
+                      </ul>
+                      <span className="text-[10px] text-slate-400 block pt-1 italic">
+                        * Toda decisión médica es evaluada y controlada por el departamento médico de la aseguradora junto al médico tratante.
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 bg-slate-900/90 rounded-lg border border-slate-800 text-[11px] space-y-1">
+                      <strong className="text-cyan-300 block font-bold">🧾 Si te indican reembolso (al regreso a casa):</strong>
+                      <ul className="list-disc list-inside text-slate-300 space-y-0.5 pl-1">
+                        <li><strong>Asistencia médica:</strong> Reporte médico original y completo, comprobantes/facturas originales de gastos según plan contratado.</li>
+                        <li><strong>Demora y/o pérdida de equipaje:</strong> Formulario PIR y comprobantes originales de gastos.</li>
+                        <li><strong>Vuelo demorado:</strong> Constancia de la aerolínea certificando demora y comprobantes originales.</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-2 bg-emerald-950/40 rounded-lg border border-emerald-500/20 text-[11px] text-emerald-300 flex items-start gap-1.5">
+                      <span className="shrink-0 text-sm">💡</span>
+                      <span>
+                        <strong>Consejo clave:</strong> Extrae estos números y tu número de póliza del documento antes de viajar y anótalos en una libreta física en tu bolso de mano por si te quedas sin batería o sin señal.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Si la respuesta es NO */
+                <div className="p-3.5 bg-rose-950/30 rounded-xl border border-rose-500/40 text-xs text-rose-200 space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-rose-300">
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>Atención: Viajas sin Seguro Médico ni Asistencia</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Las clínicas privadas en el extranjero cobran tarifas muy altas y exigen pago de inmediato con tarjeta o efectivo. Cualquier urgencia, accidente o complicación médica deberá ser pagada por ti o tu familia en casa.
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Te recomendamos contratar una póliza antes de abordar tu viaje.
+                  </p>
+                  <div className="pt-1">
+                    <button
+                      onClick={() => {
+                        setTrip((prev) => ({ ...prev, salud: { ...prev.salud, tieneSeguro: true } }));
+                        openEditInsuranceModal();
+                      }}
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> ¿Contrataste uno? Registrar mi Seguro de Viaje
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1528,7 +1907,7 @@ export default function App() {
                             href={`tel:${trip.salud.seguroTelefonoOrigen.replace(/[^0-9+]/g, '')}`}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 rounded-lg text-xs font-semibold transition"
                           >
-                            <Phone className="w-3.5 h-3.5 text-cyan-400" /> 🇨🇱 Desde Chile / País Origen ({trip.salud.seguroTelefonoOrigen})
+                            <Phone className="w-3.5 h-3.5 text-cyan-400" /> 🏠 Desde Casa / País Origen ({trip.salud.seguroTelefonoOrigen})
                           </a>
                         )}
 
@@ -1662,7 +2041,7 @@ export default function App() {
                   </p>
                   <ul className="text-[11px] text-amber-200/90 list-disc list-inside space-y-0.5 pl-1">
                     <li>Nombre exacto, dirección y teléfono del lugar donde te alojas (para mostrárselo a un taxista o policía local).</li>
-                    <li>Teléfono de contacto de tu familiar en Chile y número de tu póliza de seguro médico.</li>
+                    <li>Teléfono de contacto de tu familiar en casa y número de tu seguro de viaje.</li>
                   </ul>
                   <p className="text-[10px] text-slate-400 italic pt-0.5">
                     Este sencillo papelito te salvará de cualquier apuro si te quedas incomunicada lejos del hotel.
@@ -1755,152 +2134,327 @@ export default function App() {
       {/* ========================================================================= */}
       {showChangeCountryModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-lg w-full shadow-2xl relative text-xs my-6 max-h-[92vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
               <div className="flex items-center gap-2">
                 <Globe2 className="w-5 h-5 text-amber-400" />
-                <h3 className="font-black text-white text-base">Elegir País o Destino</h3>
+                <div>
+                  <h3 className="font-black text-white text-base">Configurar Destino del Viaje</h3>
+                  <p className="text-[11px] text-slate-400">Elige el país y escribe la ciudad exacta que vas a recorrer</p>
+                </div>
               </div>
               <button
-                onClick={() => {
-                  setShowChangeCountryModal(false);
-                  setIsCustomizingCountry(false);
-                }}
-                className="text-slate-400 hover:text-white p-1 text-sm font-bold"
+                onClick={() => setShowChangeCountryModal(false)}
+                className="text-slate-400 hover:text-white p-1 text-sm font-bold cursor-pointer rounded-lg hover:bg-slate-800"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-slate-300 text-xs mt-2 mb-3">
-              Al elegir un país, la app <strong>actualiza automáticamente</strong> la moneda, enchufe, clima, consulado y la <strong>guía de transporte y movilidad</strong> con los datos reales de esa ciudad.
-            </p>
+            <div className="overflow-y-auto pr-1 space-y-4 py-3 flex-1">
+              {/* SECCIÓN 1: CIUDAD O REGIÓN (100% LIBRE Y EDITABLE) */}
+              <div className="bg-slate-950 p-3.5 rounded-2xl border border-cyan-500/40 shadow-inner">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-white font-bold flex items-center gap-1.5 text-xs">
+                    <MapPin className="w-4 h-4 text-cyan-400" />
+                    <span>¿Qué ciudad o lugar específico vas a visitar? *</span>
+                  </label>
+                  <span className="text-[10px] text-cyan-400 font-semibold bg-cyan-950/60 px-2 py-0.5 rounded-full border border-cyan-800/40">
+                    Editable y libre
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={targetCity}
+                  onChange={(e) => setTargetCity(e.target.value)}
+                  placeholder="Ej: Barcelona, Tel Aviv, Ciudad de Panamá, Orlando, etc."
+                  className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-white font-bold text-sm outline-none transition"
+                />
+                <p className="text-[11px] text-slate-400 mt-1.5">
+                  💡 <strong className="text-slate-300">No estás limitado a la capital:</strong> Si viajas a España puedes escribir Barcelona, Ibiza, Sevilla o Valencia; si viajas a Israel puedes poner Tel Aviv o Jerusalén; si vas a Panamá puedes poner Bocas del Toro.
+                </p>
 
-            {!isCustomizingCountry ? (
-              <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-1">
-                {Object.entries(DESTINATIONS).map(([key, item]) => (
-                  <button
-                    key={key}
-                    onClick={() => handleSelectCountryPreset(key)}
-                    className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between transition cursor-pointer ${
-                      trip.paisKey === key
-                        ? 'bg-blue-950/60 border-blue-500/70 shadow-md'
-                        : 'bg-slate-950 hover:bg-slate-800 border-slate-800'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{item.bandera}</span>
-                        <strong className="text-white text-sm">{item.pais} ({item.destinoDefault})</strong>
-                      </div>
-                      <span className="text-[11px] text-slate-400 block mt-0.5">
-                        {item.moneda.split('(')[0].trim()} • {item.enchufe.split('(')[0].trim()}
-                      </span>
+                {/* Sugerencias rápidas de ciudades si el país tiene lista */}
+                {!isCustomCountryMode && DESTINATIONS[targetCountryKey]?.ciudadesSugeridas && (
+                  <div className="mt-2.5 pt-2 border-t border-slate-800/80">
+                    <span className="text-[10px] text-slate-400 block mb-1">Ciudades sugeridas en {DESTINATIONS[targetCountryKey].pais}:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {DESTINATIONS[targetCountryKey].ciudadesSugeridas!.map((city) => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => setTargetCity(city)}
+                          className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                            targetCity.toLowerCase() === city.toLowerCase()
+                              ? 'bg-cyan-500 text-slate-950 font-bold shadow'
+                              : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+                          }`}
+                        >
+                          {city}
+                        </button>
+                      ))}
                     </div>
-                    {trip.paisKey === key && (
-                      <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px] flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Activo
-                      </span>
-                    )}
-                  </button>
-                ))}
-
-                <button
-                  onClick={() => setIsCustomizingCountry(true)}
-                  className="w-full p-3 bg-slate-950 hover:bg-slate-800 border border-dashed border-amber-500/50 rounded-2xl text-left flex items-center justify-between text-amber-300 font-bold cursor-pointer mt-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <Edit3 className="w-4 h-4" />
-                    <span>¿Vas a otro destino? Escribir mi propio país</span>
                   </div>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                )}
               </div>
-            ) : (
-              <form onSubmit={handleSaveCustomDestination} className="space-y-3 mt-2">
-                <div className="p-2.5 bg-amber-500/10 rounded-xl border border-amber-500/30 text-amber-300 text-[11px]">
-                  Escribe el país y ciudad que vas a visitar. La app configurará tu bitácora para tu nuevo destino:
+
+              {/* SECCIÓN 2: PAÍS DE DESTINO */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-slate-200 font-bold flex items-center gap-1.5 text-xs">
+                    <span>🚩 País de destino:</span>
+                    <span className="text-slate-400 font-normal">(Carga enchufes, moneda y emergencias)</span>
+                  </label>
+                  {!isCustomCountryMode ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomCountryMode(true);
+                        setCustomCountryForm({
+                          pais: '',
+                          moneda: '',
+                          enchufe: '',
+                          voltaje: '',
+                          clima: '',
+                          ambulancia: ''
+                        });
+                      }}
+                      className="text-amber-400 hover:text-amber-300 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Edit3 className="w-3 h-3" /> Escribir otro país
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomCountryMode(false)}
+                      className="text-cyan-400 hover:text-cyan-300 text-[11px] font-bold cursor-pointer"
+                    >
+                      Volver a lista de países
+                    </button>
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">País *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej: Italia, Francia, México..."
-                    value={customDestinationForm.pais}
-                    onChange={(e) => setCustomDestinationForm({ ...customDestinationForm, pais: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
+                {!isCustomCountryMode ? (
+                  <>
+                    {/* Buscador interactivo de países */}
+                    <div className="relative mb-2">
+                      <input
+                        type="text"
+                        value={countrySearchQuery}
+                        onChange={(e) => setCountrySearchQuery(e.target.value)}
+                        placeholder="🔍 Buscar país (ej: Israel, Panamá, España, México, Italia...)"
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 rounded-xl px-3 py-2 text-white text-xs outline-none"
+                      />
+                      {countrySearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setCountrySearchQuery('')}
+                          className="absolute right-2.5 top-2 text-slate-400 hover:text-white"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
 
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Ciudad o Región *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej: Roma, París, Cancún..."
-                    value={customDestinationForm.destino}
-                    onChange={(e) => setCustomDestinationForm({ ...customDestinationForm, destino: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
+                    {/* Lista de países (Muestra SÓLO el País con bandera, sin forzar ciudad fija en el título) */}
+                    <div className="space-y-1.5 max-h-[30vh] overflow-y-auto pr-1">
+                      {Object.entries(DESTINATIONS)
+                        .filter(([key, item]) => {
+                          if (!countrySearchQuery.trim()) return true;
+                          const q = countrySearchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                          const p = item.pais.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                          return p.includes(q) || key.includes(q);
+                        })
+                        .map(([key, item]) => {
+                          const isSelected = targetCountryKey === key;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => handleSelectCountryInModal(key)}
+                              className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition cursor-pointer ${
+                                isSelected
+                                  ? 'bg-blue-950/70 border-blue-500 shadow-md ring-1 ring-blue-500/50'
+                                  : 'bg-slate-950 hover:bg-slate-800/80 border-slate-800/80'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="text-xl shrink-0">{item.bandera}</span>
+                                <div className="min-w-0">
+                                  <strong className="text-white text-xs sm:text-sm block truncate">
+                                    {item.pais}
+                                  </strong>
+                                  <span className="text-[10px] text-slate-400 block truncate">
+                                    💰 {item.moneda.split('(')[0].trim()} • 🔌 {item.enchufe.split('(')[0].trim()}
+                                  </span>
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <span className="shrink-0 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px] flex items-center gap-1">
+                                  <Check className="w-3 h-3" /> Seleccionado
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </>
+                ) : (
+                  /* Modo país personalizado */
+                  <div className="space-y-2.5 bg-slate-950 p-3 rounded-2xl border border-amber-500/30">
+                    <div className="p-2 bg-amber-500/10 rounded-xl text-amber-300 text-[11px] leading-relaxed">
+                      ✍️ Escribe el nombre del país. Si coincide con algún destino internacional (como Israel, Panamá, etc.), la app autocompletará la moneda y el enchufe para que nunca quede vacío:
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Nombre del País *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej: Israel, Panamá, Grecia, Noruega..."
+                        value={customCountryForm.pais}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const matched = findCountryPreset(val);
+                          if (matched) {
+                            setCustomCountryForm({
+                              pais: val,
+                              moneda: matched.moneda,
+                              enchufe: matched.enchufe,
+                              voltaje: matched.voltaje,
+                              clima: matched.clima,
+                              ambulancia: matched.ambulancia
+                            });
+                          } else {
+                            setCustomCountryForm({
+                              ...customCountryForm,
+                              pais: val,
+                              moneda: customCountryForm.moneda || 'Dólar USD / Moneda Local',
+                              enchufe: customCountryForm.enchufe || 'Tipo C y F / Tipo A y B',
+                              voltaje: customCountryForm.voltaje || '110V - 240V',
+                              ambulancia: customCountryForm.ambulancia || '112 / 911'
+                            });
+                          }
+                        }}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-slate-400 text-[10px] font-semibold mb-1">Moneda Local</label>
+                        <input
+                          type="text"
+                          placeholder="Ej: Shekel, Dólar, Euro..."
+                          value={customCountryForm.moneda}
+                          onChange={(e) => setCustomCountryForm({ ...customCountryForm, moneda: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 text-[10px] font-semibold mb-1">Tipo de Enchufe</label>
+                        <input
+                          type="text"
+                          placeholder="Ej: Tipo C y H, Tipo A y B..."
+                          value={customCountryForm.enchufe}
+                          onChange={(e) => setCustomCountryForm({ ...customCountryForm, enchufe: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Moneda Local</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Euro (EUR), Peso Mexicano (MXN)..."
-                    value={customDestinationForm.moneda}
-                    onChange={(e) => setCustomDestinationForm({ ...customDestinationForm, moneda: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Tipo de Enchufe</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Tipo C y F (patitas redondas)..."
-                    value={customDestinationForm.enchufe}
-                    onChange={(e) => setCustomDestinationForm({ ...customDestinationForm, enchufe: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
-
-                <div className="pt-2 border-t border-slate-800 flex justify-end gap-2">
+              {/* SECCIÓN 3: TARJETA DE VISTA PREVIA DE DATOS DE VIAJE */}
+              <div className="p-3 bg-gradient-to-br from-slate-950 to-blue-950/40 rounded-2xl border border-slate-800">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    📋 Datos que se activarán para {targetCity || 'tu destino'} ({isCustomCountryMode ? (customCountryForm.pais || 'Personalizado') : DESTINATIONS[targetCountryKey]?.pais}):
+                  </span>
                   <button
                     type="button"
-                    onClick={() => setIsCustomizingCountry(false)}
-                    className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-xl font-semibold"
+                    onClick={() => setIsEditingAdvancedDetails(!isEditingAdvancedDetails)}
+                    className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer"
                   >
-                    Volver a lista
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold"
-                  >
-                    Guardar y Aplicar
+                    {isEditingAdvancedDetails ? 'Cerrar ajustes' : '⚙️ Ajustar moneda/enchufe'}
                   </button>
                 </div>
-              </form>
-            )}
 
-            <div className="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                    <span className="text-slate-400 block text-[10px]">💰 Moneda</span>
+                    <strong className="text-white truncate block">
+                      {manualCurrencyOverride || (isCustomCountryMode ? (customCountryForm.moneda || 'USD / Local') : DESTINATIONS[targetCountryKey]?.moneda)}
+                    </strong>
+                  </div>
+                  <div className="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                    <span className="text-slate-400 block text-[10px]">🔌 Enchufe / Tomas</span>
+                    <strong className="text-white truncate block">
+                      {manualEnchufeOverride || (isCustomCountryMode ? (customCountryForm.enchufe || 'Tipo A/C') : DESTINATIONS[targetCountryKey]?.enchufe)}
+                    </strong>
+                  </div>
+                  <div className="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                    <span className="text-slate-400 block text-[10px]">⚡ Voltaje</span>
+                    <span className="text-white truncate block">
+                      {isCustomCountryMode ? (customCountryForm.voltaje || '110V - 240V') : DESTINATIONS[targetCountryKey]?.voltaje}
+                    </span>
+                  </div>
+                  <div className="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                    <span className="text-slate-400 block text-[10px]">🚑 Emergencias / Ambulancia</span>
+                    <span className="text-emerald-400 font-bold truncate block">
+                      {isCustomCountryMode ? (customCountryForm.ambulancia || '112 / 911') : DESTINATIONS[targetCountryKey]?.ambulancia}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Ajustes manuales opcionales */}
+                {isEditingAdvancedDetails && (
+                  <div className="mt-2.5 pt-2 border-t border-slate-800 space-y-2">
+                    <div>
+                      <label className="text-[10px] text-slate-300 font-semibold block mb-0.5">Sobrescribir Moneda:</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Nuevo Shekel (ILS), Balboa (PAB), Euro (EUR)..."
+                        value={manualCurrencyOverride}
+                        onChange={(e) => setManualCurrencyOverride(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-300 font-semibold block mb-0.5">Sobrescribir Enchufe:</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Tipo C y H, Tipo A y B..."
+                        value={manualEnchufeOverride}
+                        onChange={(e) => setManualEnchufeOverride(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-white text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2 shrink-0">
               <button
-                onClick={() => {
-                  setShowChangeCountryModal(false);
-                  setIsCustomizingCountry(false);
-                }}
-                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold cursor-pointer"
+                type="button"
+                onClick={() => setShowChangeCountryModal(false)}
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold cursor-pointer"
               >
-                Cerrar
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleApplyDestination}
+                className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-extrabold shadow-lg shadow-blue-500/25 flex items-center gap-1.5 cursor-pointer text-xs sm:text-sm"
+              >
+                <Check className="w-4 h-4" /> Guardar y Aplicar Destino
               </button>
             </div>
           </div>
         </div>
       )}
-
       {/* ========================================================================= */}
       {/* --- MODAL: FICHA SOS DISCRETA --- */}
       {/* ========================================================================= */}
@@ -1921,7 +2475,7 @@ export default function App() {
             </div>
 
             <p className="text-[11px] text-slate-300 mt-2 mb-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-              Datos clave para asistencia médica crítica, contacto consular oficial o trámites con tu familia en Chile.
+              Datos clave para asistencia médica crítica, contacto consular oficial o trámites con tu familia en casa.
             </p>
 
             <div className="space-y-2.5">
@@ -2030,7 +2584,7 @@ export default function App() {
                         href={`tel:${trip.salud.seguroTelefonoOrigen.replace(/[^0-9+]/g, '')}`}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 rounded-xl text-xs font-semibold transition"
                       >
-                        <Phone className="w-3.5 h-3.5 text-cyan-400" /> Llamar desde Chile ({trip.salud.seguroTelefonoOrigen})
+                        <Phone className="w-3.5 h-3.5 text-cyan-400" /> Llamar desde Casa ({trip.salud.seguroTelefonoOrigen})
                       </a>
                     )}
                   </div>
@@ -2038,7 +2592,7 @@ export default function App() {
               )}
 
               <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
-                <span className="text-slate-400 text-[10px] uppercase font-bold block">Contacto Familiar en Chile:</span>
+                <span className="text-slate-400 text-[10px] uppercase font-bold block">Contacto Familiar en Casa:</span>
                 <strong className="text-cyan-300 text-xs block mt-0.5">{trip.familiarNombre}</strong>
                 <div className="mt-2">
                   <a
@@ -2157,173 +2711,431 @@ export default function App() {
       )}
 
       {/* ========================================================================= */}
-      {/* --- MODAL: AGREGAR PASAJE O SEGURO --- */}
+      {/* --- MODAL: AGREGAR PASAJE DE VUELO O TRASLADO --- */}
       {/* ========================================================================= */}
       {isAddingBooking && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-lg w-full shadow-2xl relative text-xs my-6">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="font-bold text-white text-sm">Agregar Pasaje de Vuelo o Seguro</h3>
-              <button onClick={() => setIsAddingBooking(false)} className="text-slate-400 hover:text-white p-1">✕</button>
+              <div>
+                <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
+                  <Plane className="w-4 h-4 text-cyan-400" />
+                  <span>Agregar Pasaje o Traslado</span>
+                </h3>
+                <p className="text-[11px] text-slate-400">Guarda tus datos de vuelo, billetes de bus y conexiones.</p>
+              </div>
+              <button
+                onClick={() => setIsAddingBooking(false)}
+                className="text-slate-400 hover:text-white p-1 text-base cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleAddBooking} className="space-y-3 mt-3">
+              {/* Selector de Tipo de Traslado */}
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Tipo de Documento</label>
-                <div className="grid grid-cols-3 gap-2">
+                <label className="block text-slate-300 font-semibold mb-1">Tipo de Transporte</label>
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setNewBookingType('vuelo')}
-                    className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition flex flex-col items-center gap-1 cursor-pointer ${
+                    className={`py-2 px-2 text-center rounded-xl font-bold text-xs border transition flex items-center justify-center gap-2 cursor-pointer ${
                       newBookingType === 'vuelo'
-                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500'
+                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500 shadow-sm'
                         : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
                     }`}
                   >
                     <Plane className="w-4 h-4" />
-                    <span>Vuelo</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setNewBookingType('seguro')}
-                    className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition flex flex-col items-center gap-1 cursor-pointer ${
-                      newBookingType === 'seguro'
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
-                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Seguro Médico</span>
+                    <span>✈️ Vuelo Comercial</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setNewBookingType('transporte')}
-                    className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition flex flex-col items-center gap-1 cursor-pointer ${
+                    className={`py-2 px-2 text-center rounded-xl font-bold text-xs border transition flex items-center justify-center gap-2 cursor-pointer ${
                       newBookingType === 'transporte'
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500'
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500 shadow-sm'
                         : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
                     }`}
                   >
                     <Bus className="w-4 h-4" />
-                    <span>Traslado / Bus</span>
+                    <span>🚌 Traslado / Bus / Tren</span>
                   </button>
                 </div>
               </div>
 
-              {/* Banner explicativo si es Seguro */}
-              {newBookingType === 'seguro' && (
-                <div className="p-3 bg-emerald-950/40 rounded-xl border border-emerald-500/30 text-xs text-slate-300 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-emerald-300">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Los 4 datos vitales de la póliza (los que sí salvan):</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    Las pólizas tienen muchas páginas con formularios que nadie lee. En caso de una urgencia médica, la clínica solo necesita tu <strong>número de póliza</strong> y estos <strong>teléfonos de emergencia</strong> para atenderte sin que pagues de tu bolsillo.
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  {newBookingType === 'vuelo'
-                    ? 'Aerolínea o Ruta de Vuelo *'
-                    : newBookingType === 'seguro'
-                    ? 'Compañía de Seguro o Asistencia Médica *'
-                    : 'Nombre del Traslado o Empresa de Bus/Tren *'}
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder={
-                    newBookingType === 'vuelo'
-                      ? 'Ej: JetSmart vuelo Santiago a Florianópolis'
-                      : newBookingType === 'seguro'
-                      ? 'Ej: Assist Card, Universal Assistance, etc.'
-                      : 'Ej: Transfer Aeropuerto a Posada Canasvieiras'
-                  }
-                  value={newBookingTitle}
-                  onChange={(e) => setNewBookingTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  {newBookingType === 'seguro' ? 'Número de Póliza / Voucher *' : 'Código de Reserva / Billete *'}
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder={newBookingType === 'seguro' ? 'Ej: POL-BR-99120' : 'Ej: 13N7JY'}
-                  value={newBookingCode}
-                  onChange={(e) => setNewBookingCode(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono uppercase"
-                />
-              </div>
-
-              {/* Campos específicos para SEGURO */}
-              {newBookingType === 'seguro' ? (
-                <div className="space-y-3 pt-1">
-                  <div>
-                    <label className="block text-slate-300 font-semibold mb-1">
-                      📞 Teléfono de Emergencia en el Extranjero (llamada local en destino)
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="Ej: +55 11 3132 1000"
-                      value={newBookingPhoneDestino}
-                      onChange={(e) => setNewBookingPhoneDestino(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
-                    />
-                    <span className="text-[10px] text-slate-400 block mt-0.5">El número para llamar desde el país donde te encuentres si necesitas médico.</span>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-300 font-semibold mb-1">
-                      🇨🇱 Teléfono de Asistencia desde tu País de Origen (Chile)
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="Ej: +56 2 2897 5000"
-                      value={newBookingPhoneOrigen}
-                      onChange={(e) => setNewBookingPhoneOrigen(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
-                    />
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Por si llamas con tu chip propio o tu familia en Chile debe llamar para coordinar.</span>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-300 font-semibold mb-1">
-                      ✉️ Correo Electrónico de Asistencia Médica (Opcional)
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="Ej: asistencias@seguroviaje.com"
-                      value={newBookingEmail}
-                      onChange={(e) => setNewBookingEmail(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
-                    />
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Útil si no tienes señal celular pero sí WiFi en el hotel o clínica.</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                    <input
-                      type="checkbox"
-                      id="syncHealth"
-                      checked={newBookingSyncHealth}
-                      onChange={(e) => setNewBookingSyncHealth(e.target.checked)}
-                      className="w-4 h-4 text-emerald-500 rounded"
-                    />
-                    <label htmlFor="syncHealth" className="text-[11px] text-slate-200 cursor-pointer">
-                      Sincronizar automáticamente con la pestaña de <strong>Salud &amp; Urgencias</strong> y la <strong>Ficha SOS</strong>
-                    </label>
-                  </div>
-                </div>
-              ) : (
-                /* Fechas, horas y teléfono para Vuelo o Transporte */
+              {/* ================= VUELO COMERCIAL ================= */}
+              {newBookingType === 'vuelo' ? (
                 <>
+                  {/* ¿Qué viaje es? (Ida o Vuelta) */}
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      ¿Qué viaje es? (Tramo del vuelo) *
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewBookingTramoTipo('ida')}
+                        className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition flex items-center justify-center gap-1 cursor-pointer ${
+                          newBookingTramoTipo === 'ida'
+                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500'
+                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                        }`}
+                      >
+                        <span>🛫 Vuelo de Ida</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewBookingTramoTipo('vuelta')}
+                        className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition flex items-center justify-center gap-1 cursor-pointer ${
+                          newBookingTramoTipo === 'vuelta'
+                            ? 'bg-purple-500/20 text-purple-300 border-purple-500'
+                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                        }`}
+                      >
+                        <span>🛬 Regreso / Vuelta</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewBookingTramoTipo('escala')}
+                        className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition flex items-center justify-center gap-1 cursor-pointer ${
+                          newBookingTramoTipo === 'escala'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500'
+                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                        }`}
+                      >
+                        <span>🔄 Conexión / Escala</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* CÓDIGO DE RESERVA Y NÚMERO DE VUELO (Las 2 cosas clave que pidió la usuaria) */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">
+                        🎫 Código de Reserva (PNR) *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej: 13N7JY"
+                        value={newBookingCode}
+                        onChange={(e) => setNewBookingCode(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono uppercase tracking-widest text-sm font-bold"
+                      />
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Tus 6 letras/números para check-in</span>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">
+                        ✈️ Número de Vuelo *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej: JA 560 o LA 402"
+                        value={newBookingNumeroVuelo}
+                        onChange={(e) => setNewBookingNumeroVuelo(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono uppercase tracking-wider text-sm font-bold"
+                      />
+                      <span className="text-[10px] text-cyan-400 block mt-0.5">El que anuncian en pantallas</span>
+                    </div>
+                  </div>
+
+                  {/* Aerolínea */}
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Aerolínea</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: JetSmart, LATAM, Sky, Gol, etc."
+                      value={newBookingTitle}
+                      onChange={(e) => setNewBookingTitle(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+
+                  {/* Ruta: Origen a Destino */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Ciudad u Origen</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Santiago (SCL)"
+                        value={newBookingOrigen}
+                        onChange={(e) => setNewBookingOrigen(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Ciudad o Destino</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Florianópolis (FLN)"
+                        value={newBookingDestino}
+                        onChange={(e) => setNewBookingDestino(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Fechas y Horarios */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Fecha</label>
+                      <input
+                        type="date"
+                        value={newBookingDate}
+                        onChange={(e) => setNewBookingDate(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Hora Salida</label>
+                      <input
+                        type="time"
+                        value={newBookingTime}
+                        onChange={(e) => setNewBookingTime(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Llegada aprox</label>
+                      <input
+                        type="time"
+                        value={newBookingHoraLlegada}
+                        onChange={(e) => setNewBookingHoraLlegada(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-white text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Asiento y Puerta (Opcionales) */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Asiento (Opcional)</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: 12C o 14A"
+                        value={newBookingAsiento}
+                        onChange={(e) => setNewBookingAsiento(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Terminal / Puerta (Opcional)</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: T2 / Puerta 14"
+                        value={newBookingTerminalPuerta}
+                        onChange={(e) => setNewBookingTerminalPuerta(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Escala y Conexión */}
+                  {newBookingTramoTipo === 'escala' ? (
+                    <div className="p-3 bg-amber-950/20 rounded-xl border border-amber-500/40 space-y-2.5">
+                      <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
+                        <CornerDownRight className="w-4 h-4" />
+                        <span>Datos de esta Escala / Conexión</span>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-slate-300 mb-1">
+                          Detalle de la conexión (Aeropuerto o tiempo de espera):
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ej: Conexión de 2h en São Paulo (GRU) rumbo a Florianópolis"
+                          value={newBookingLayoverInfo}
+                          onChange={(e) => setNewBookingLayoverInfo(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <input
+                          type="checkbox"
+                          id="chkBagDirectConnection"
+                          checked={newBookingBagDirect}
+                          onChange={(e) => setNewBookingBagDirect(e.target.checked)}
+                          className="w-4 h-4 text-emerald-500 rounded cursor-pointer"
+                        />
+                        <label htmlFor="chkBagDirectConnection" className="text-[11px] text-slate-300 cursor-pointer">
+                          Mi equipaje viene transferido directo (no tengo que retirarlo en este aeropuerto)
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2.5">
+                      <label className="block text-slate-300 font-semibold text-xs">
+                        ¿Este vuelo es directo o tiene escala?
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setNewBookingHasLayover(false)}
+                          className={`py-2 px-2 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                            !newBookingHasLayover
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
+                              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                          }`}
+                        >
+                          <span>🟢 Directo (Sin escalas)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewBookingHasLayover(true)}
+                          className={`py-2 px-2 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                            newBookingHasLayover
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500'
+                              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                          }`}
+                        >
+                          <span>🔄 Con Escala</span>
+                        </button>
+                      </div>
+
+                      {newBookingHasLayover && (
+                        <div className="space-y-2 pt-2 border-t border-slate-800">
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-0.5">
+                              Aeropuerto o Ciudad donde hace escala:
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ej: Escala de 2h 30m en São Paulo (GRU)"
+                              value={newBookingLayoverInfo}
+                              onChange={(e) => setNewBookingLayoverInfo(e.target.value)}
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="chkBagDirect"
+                              checked={newBookingBagDirect}
+                              onChange={(e) => setNewBookingBagDirect(e.target.checked)}
+                              className="w-3.5 h-3.5 text-emerald-500 rounded cursor-pointer"
+                            />
+                            <label htmlFor="chkBagDirect" className="text-[11px] text-slate-300 cursor-pointer">
+                              Mi equipaje va directo al destino final (no lo retiro en la escala)
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* SUBIDA DE FOTO O PDF DEL PASAJE CON AUTO-COMPLETADO */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-slate-300 font-semibold block">
+                        📸 Foto o PDF de tu Pasaje / Tarjeta de Embarque
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleApplySampleTicket}
+                        className="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 cursor-pointer bg-cyan-950/50 hover:bg-cyan-950 px-2 py-0.5 rounded-lg border border-cyan-800 transition"
+                      >
+                        <Sparkles className="w-3 h-3 text-cyan-400" />
+                        <span>Auto-completar ejemplo</span>
+                      </button>
+                    </div>
+
+                    <label className="border border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-950/60 transition">
+                      <Upload className="w-5 h-5 text-cyan-400 mb-1" />
+                      <span className="text-[11px] text-slate-300 font-medium text-center">
+                        {newBookingFile ? (
+                          <span className="text-emerald-400 font-bold">✓ {newBookingFile.name}</span>
+                        ) : (
+                          'Toca para seleccionar foto de tu pasaje o PDF'
+                        )}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5">
+                        Detecta automáticamente Número de Vuelo y Código de Reserva
+                      </span>
+                      <input
+                        type="file"
+                        accept=".pdf,image/*"
+                        className="hidden"
+                        onChange={handleTicketFileChange}
+                      />
+                    </label>
+
+                    {autoFillSuccessMsg && (
+                      <div className="p-2.5 bg-cyan-950/60 border border-cyan-500/40 rounded-xl text-cyan-200 text-xs flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                        <span>{autoFillSuccessMsg}</span>
+                      </div>
+                    )}
+
+                    {/* ALERTA VIAJERA SOBRE EL SEGURO EN EL PASAJE */}
+                    <div className="p-2.5 bg-amber-950/40 rounded-xl border border-amber-500/30 text-xs text-slate-300 space-y-1">
+                      <div className="flex items-center gap-1.5 font-bold text-amber-300">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>Ojo viajero con el seguro que aparece en tu pasaje:</span>
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        En muchos pasajes de aerolínea aparece una mención comercial que dice <em>"Seguro contratado"</em>. <strong>Ese NO es el número de la póliza médica</strong> con el que te atenderán en un hospital extranjero. Tu póliza real de asistencia debes revisarla y registrarla en el módulo <strong>Seguro de Viaje</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* ================= TRASLADO / BUS / TREN ================= */
+                <>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      Empresa de Bus, Tren o Tipo de Transfer *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: Bus Catarinense, Transfer Aeropuerto, etc."
+                      value={newBookingTitle}
+                      onChange={(e) => setNewBookingTitle(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      Código de Billete o Localizador *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: TKT-88219 o Billete N° 450"
+                      value={newBookingCode}
+                      onChange={(e) => setNewBookingCode(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono uppercase"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Origen / Parada de Subida</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Terminal Rodoviária"
+                        value={newBookingOrigen}
+                        onChange={(e) => setNewBookingOrigen(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Destino / Parada de Bajada</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Posada Canasvieiras"
+                        value={newBookingDestino}
+                        onChange={(e) => setNewBookingDestino(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-slate-300 font-semibold mb-1">Fecha</label>
@@ -2346,94 +3158,202 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">
-                      Teléfono de Contacto de la Empresa (Opcional)
-                    </label>
+                    <label className="block text-slate-300 font-semibold mb-1">Asiento o Andén (Opcional)</label>
                     <input
-                      type="tel"
-                      placeholder="Ej: +56 2 2731 8787"
-                      value={newBookingPhone}
-                      onChange={(e) => setNewBookingPhone(e.target.value)}
+                      type="text"
+                      placeholder="Ej: Asiento 24 / Andén 4"
+                      value={newBookingAsiento}
+                      onChange={(e) => setNewBookingAsiento(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
                     />
                   </div>
+
+                  {/* Subir comprobante bus */}
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      Adjuntar Billete o Comprobante (Opcional)
+                    </label>
+                    <label className="border border-dashed border-slate-700 hover:border-amber-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-950/60 transition">
+                      <Upload className="w-5 h-5 text-amber-400 mb-1" />
+                      <span className="text-[11px] text-slate-300 font-medium">
+                        {newBookingFile ? (
+                          <span className="text-emerald-400 font-bold">✓ {newBookingFile.name}</span>
+                        ) : (
+                          'Toca para adjuntar foto o PDF del billete'
+                        )}
+                      </span>
+                      <input
+                        type="file"
+                        accept=".pdf,image/*"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(e, setNewBookingFile)}
+                      />
+                    </label>
+                  </div>
                 </>
               )}
-
-              {/* Escala (si es vuelo) */}
-              {newBookingType === 'vuelo' && (
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-slate-200">¿El vuelo tiene escala en otro aeropuerto?</span>
-                    <input
-                      type="checkbox"
-                      checked={newBookingHasLayover}
-                      onChange={(e) => setNewBookingHasLayover(e.target.checked)}
-                      className="w-4 h-4 text-cyan-500 rounded"
-                    />
-                  </div>
-
-                  {newBookingHasLayover && (
-                    <div className="space-y-2 pt-1 border-t border-slate-800">
-                      <div>
-                        <label className="block text-[11px] text-slate-400 mb-0.5">Aeropuerto o Ciudad de la escala:</label>
-                        <input
-                          type="text"
-                          placeholder="Ej: Escala de 2h en São Paulo (GRU)"
-                          value={newBookingLayoverInfo}
-                          onChange={(e) => setNewBookingLayoverInfo(e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="chkBag"
-                          checked={newBookingBagDirect}
-                          onChange={(e) => setNewBookingBagDirect(e.target.checked)}
-                          className="w-3.5 h-3.5 text-emerald-500 rounded"
-                        />
-                        <label htmlFor="chkBag" className="text-[11px] text-slate-300 cursor-pointer">
-                          Mi maleta va directo al destino final (no la retiro en la escala)
-                        </label>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Archivo adjunto */}
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  Adjuntar Comprobante o Foto (Opcional)
-                </label>
-                <label className="border border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-950/60 transition">
-                  <Upload className="w-5 h-5 text-cyan-400 mb-1" />
-                  <span className="text-[11px] text-slate-300 font-medium">
-                    {newBookingFile ? newBookingFile.name : 'Toca para adjuntar tu foto o PDF'}
-                  </span>
-                  <input
-                    type="file"
-                    accept=".pdf,image/*"
-                    className="hidden"
-                    onChange={(e) => handleFileUpload(e, setNewBookingFile)}
-                  />
-                </label>
-              </div>
 
               <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAddingBooking(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-semibold cursor-pointer"
+                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-semibold cursor-pointer hover:bg-slate-700 transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold cursor-pointer"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold cursor-pointer transition shadow-md"
                 >
                   Guardar en mi Bitácora
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* --- MODAL DEDICADO: EDITAR SEGURO DE VIAJE --- */}
+      {/* ========================================================================= */}
+      {isEditingInsuranceModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm">Editar Seguro de Viaje</h3>
+                  <p className="text-[11px] text-slate-400">Datos vitales ante urgencias médicas y reembolsos.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditingInsuranceModal(false)}
+                className="text-slate-400 hover:text-white p-1 text-base cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveInsuranceModal} className="space-y-3 mt-3">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Nombre de la Aseguradora o Asistencia *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Assist Card, Universal Assistance, etc."
+                  value={insuranceForm.compania}
+                  onChange={(e) => setInsuranceForm({ ...insuranceForm, compania: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Número de Póliza / Voucher *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: POL-BR-99218"
+                  value={insuranceForm.poliza}
+                  onChange={(e) => setInsuranceForm({ ...insuranceForm, poliza: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono uppercase font-bold"
+                />
+                <span className="text-[10px] text-slate-400 block mt-0.5">El código identificador de tu contrato</span>
+              </div>
+
+              {/* Fechas de vigencia de la póliza */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    🗓️ Fecha Contratación / Inicio
+                  </label>
+                  <input
+                    type="date"
+                    value={insuranceForm.fechaInicio}
+                    onChange={(e) => setInsuranceForm({ ...insuranceForm, fechaInicio: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    🗓️ Fecha de Término
+                  </label>
+                  <input
+                    type="date"
+                    value={insuranceForm.fechaFin}
+                    onChange={(e) => setInsuranceForm({ ...insuranceForm, fechaFin: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  📞 Teléfono de Emergencia en el Extranjero (Llamada local en destino)
+                </label>
+                <input
+                  type="tel"
+                  placeholder="Ej: +55 11 3132 1000"
+                  value={insuranceForm.telefonoDestino}
+                  onChange={(e) => setInsuranceForm({ ...insuranceForm, telefonoDestino: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                />
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  El número para llamar desde el país donde estás viajando ante una urgencia.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  🏠 Teléfono de Asistencia desde tu País de Origen / Casa
+                </label>
+                <input
+                  type="tel"
+                  placeholder="Ej: +56 2 2897 5000"
+                  value={insuranceForm.telefonoOrigen}
+                  onChange={(e) => setInsuranceForm({ ...insuranceForm, telefonoOrigen: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                />
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  Para que tu familia en casa pueda llamar a la aseguradora y coordinar la atención si estás solo.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  ✉️ Correo Electrónico de Asistencia Médica
+                </label>
+                <input
+                  type="email"
+                  placeholder="Ej: asistencias@seguroviaje.com"
+                  value={insuranceForm.email}
+                  onChange={(e) => setInsuranceForm({ ...insuranceForm, email: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                />
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  Útil para coordinar si no tienes señal celular pero sí WiFi en la clínica u hotel.
+                </span>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingInsuranceModal(false)}
+                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-semibold cursor-pointer hover:bg-slate-700 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold cursor-pointer transition shadow-md"
+                >
+                  Guardar Seguro
                 </button>
               </div>
             </form>
@@ -2584,7 +3504,7 @@ export default function App() {
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-300 font-semibold mb-1">🇨🇱 Teléfono desde Chile / Origen</label>
+                      <label className="block text-slate-300 font-semibold mb-1">🏠 Teléfono desde Casa / País de Origen</label>
                       <input
                         type="tel"
                         value={healthForm.seguroTelefonoOrigen || ''}
