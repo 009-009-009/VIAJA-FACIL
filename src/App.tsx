@@ -3440,8 +3440,9 @@ export default function App() {
       {/* --- MODAL: EDITAR / REGISTRAR CENTRO MÉDICO O CLÍNICA CERCANA --- */}
       {/* ========================================================================= */}
       {isEditingHospitalModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm overflow-y-auto p-3 sm:p-4">
+          <div className="min-h-full flex items-start sm:items-center justify-center py-4 sm:py-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div>
                 <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
@@ -3520,6 +3521,7 @@ export default function App() {
               </div>
             </form>
           </div>
+          </div>
         </div>
       )}
 
@@ -3527,8 +3529,9 @@ export default function App() {
       {/* --- MODAL: EDITAR CONTACTO FAMILIAR EN CASA --- */}
       {/* ========================================================================= */}
       {isEditingFamiliarModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm overflow-y-auto p-3 sm:p-4">
+          <div className="min-h-full flex items-start sm:items-center justify-center py-4 sm:py-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div>
                 <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
@@ -3594,6 +3597,7 @@ export default function App() {
               </div>
             </form>
           </div>
+          </div>
         </div>
       )}
 
@@ -3601,8 +3605,9 @@ export default function App() {
       {/* --- MODAL: REGISTRAR / EDITAR AGENCIA DE RETIRO DE DINERO (WESTERN UNION) --- */}
       {/* ========================================================================= */}
       {isAgencyModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm overflow-y-auto p-3 sm:p-4">
+          <div className="min-h-full flex items-start sm:items-center justify-center py-4 sm:py-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div>
                 <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
@@ -3733,6 +3738,7 @@ export default function App() {
               </div>
             </form>
           </div>
+          </div>
         </div>
       )}
 
@@ -3740,19 +3746,28 @@ export default function App() {
       {/* --- MODAL: AGREGAR PASAJE DE VUELO O TRASLADO --- */}
       {/* ========================================================================= */}
       {isAddingBooking && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-lg w-full shadow-2xl relative text-xs my-6">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm overflow-y-auto p-3 sm:p-4">
+          <div className="min-h-full flex items-start sm:items-center justify-center py-4 sm:py-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-lg w-full shadow-2xl relative text-xs my-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div>
-                <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
                   <Plane className="w-4 h-4 text-cyan-400" />
-                  <span>Agregar Pasaje o Traslado</span>
-                </h3>
-                <p className="text-[11px] text-slate-400">Guarda tus datos de vuelo, billetes de bus y conexiones.</p>
+                </div>
+                <div>
+                  <h3 className="font-black text-white text-base tracking-tight">
+                    Agregar Pasaje o Traslado
+                  </h3>
+                  <p className="text-[11px] text-slate-300">
+                    Guarda tus datos de vuelo, conexiones y billetes de bus.
+                  </p>
+                </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsAddingBooking(false)}
-                className="text-slate-400 hover:text-white p-1 text-base cursor-pointer"
+                className="text-slate-400 hover:text-white p-1.5 text-base rounded-xl hover:bg-slate-800 transition cursor-pointer"
+                aria-label="Cerrar ventana"
               >
                 ✕
               </button>
@@ -3833,6 +3848,163 @@ export default function App() {
                       >
                         <span>🔄 Conexión / Escala</span>
                       </button>
+                    </div>
+                  </div>
+
+                  {/* SUBIDA DE FOTO O PDF DEL PASAJE CON AUTO-COMPLETADO */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-slate-300 font-semibold block">
+                        📸 Foto o PDF de tu Pasaje / Tarjeta de Embarque
+                      </label>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => handleApplySampleTicket('ida')}
+                          className="text-[11px] text-cyan-300 hover:text-cyan-200 font-bold flex items-center gap-1 cursor-pointer bg-cyan-950/60 hover:bg-cyan-900 px-2 py-0.5 rounded-lg border border-cyan-700/60 transition"
+                          title="Auto-completar vuelo de ida"
+                        >
+                          <Plane className="w-3 h-3 text-cyan-400" />
+                          <span>🛫 Ejemplo Ida</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApplySampleTicket('vuelta')}
+                          className="text-[11px] text-purple-300 hover:text-purple-200 font-bold flex items-center gap-1 cursor-pointer bg-purple-950/60 hover:bg-purple-900 px-2 py-0.5 rounded-lg border border-purple-700/60 transition"
+                          title="Auto-completar vuelo de regreso directo"
+                        >
+                          <Plane className="w-3 h-3 text-purple-400 rotate-90" />
+                          <span>🛬 Regreso Directo</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApplySampleTicket('escala')}
+                          className="text-[11px] text-amber-300 hover:text-amber-200 font-bold flex items-center gap-1 cursor-pointer bg-amber-950/60 hover:bg-amber-900 px-2 py-0.5 rounded-lg border border-amber-700/60 transition"
+                          title="Auto-completar regreso con escala en São Paulo"
+                        >
+                          <CornerDownRight className="w-3 h-3 text-amber-400" />
+                          <span>🔄 Con Escala</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <label className="border border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-950/60 transition">
+                      <Upload className="w-5 h-5 text-cyan-400 mb-1" />
+                      <span className="text-[11px] text-slate-300 font-medium text-center">
+                        {newBookingFile ? (
+                          <span className="text-emerald-400 font-bold">✓ {newBookingFile.name}</span>
+                        ) : (
+                          'Toca para seleccionar foto de tu pasaje o PDF'
+                        )}
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5">
+                        Lector Óptico inteligente: detecta Ida, Regreso, N° de Vuelo, Código y Escalas
+                      </span>
+                      <input
+                        type="file"
+                        accept=".pdf,image/*"
+                        className="hidden"
+                        onChange={handleTicketFileChange}
+                      />
+                    </label>
+
+                    {isOcrScanning && (
+                      <div className="p-3 bg-blue-950/80 border border-blue-500/50 rounded-xl text-cyan-200 text-xs flex items-center gap-2.5 animate-pulse">
+                        <Loader2 className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />
+                        <div>
+                          <span className="font-bold block">🔍 Lector Óptico en progreso...</span>
+                          <span className="text-[11px] text-slate-300">Escaneando pasaje (número de vuelo, código de reserva, tramo ida/vuelta, escalas...)</span>
+                        </div>
+                      </div>
+                    )}
+                    {/* BANNER DE ITINERARIO COMPLETO DETECTADO */}
+                    {detectedItinerary && (
+                      <div className="p-3.5 bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 rounded-2xl border-2 border-cyan-500/50 shadow-xl space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-cyan-300 text-xs">
+                            <Sparkles className="w-4 h-4 text-cyan-400" />
+                            <span>✨ ¡Itinerario Completo Detectado!</span>
+                          </div>
+                          <span className="text-[10px] bg-cyan-500/20 text-cyan-300 font-mono font-bold px-2 py-0.5 rounded-full border border-cyan-500/30">
+                            Reserva: {detectedItinerary.pnr}
+                          </span>
+                        </div>
+
+                        {detectedItinerary.pasajero && (
+                          <p className="text-[11px] text-slate-300">
+                            Pasajero: <strong className="text-white">{detectedItinerary.pasajero}</strong>
+                          </p>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          {detectedItinerary.ida && (
+                            <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
+                              <span className="text-[10px] font-bold text-cyan-400 uppercase flex items-center gap-1">
+                                <Plane className="w-3 h-3" /> 1. Ida ({detectedItinerary.ida.titulo})
+                              </span>
+                              <strong className="text-white block">{detectedItinerary.ida.numeroVuelo} • {detectedItinerary.ida.origen} ➔ {detectedItinerary.ida.destino}</strong>
+                              <span className="text-[10px] text-slate-400 block">
+                                {detectedItinerary.ida.fechaTexto || detectedItinerary.ida.fecha} ({detectedItinerary.ida.hora} hrs)
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => applyDetectedLegToForm(detectedItinerary.ida!)}
+                                className="mt-1 w-full py-1 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                              >
+                                Cargar solo Ida en formulario
+                              </button>
+                            </div>
+                          )}
+
+                          {detectedItinerary.regreso && (
+                            <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
+                              <span className="text-[10px] font-bold text-purple-400 uppercase flex items-center gap-1">
+                                <Plane className="w-3 h-3 rotate-90" /> 2. Regreso ({detectedItinerary.regreso.hasLayover ? 'Con Escala' : 'Directo'})
+                              </span>
+                              <strong className="text-white block">{detectedItinerary.regreso.numeroVuelo} • {detectedItinerary.regreso.origen} ➔ {detectedItinerary.regreso.destino}</strong>
+                              {detectedItinerary.regreso.escala && (
+                                <span className="text-[10px] text-amber-300 block line-clamp-1">
+                                  {detectedItinerary.regreso.escala}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => applyDetectedLegToForm(detectedItinerary.regreso!)}
+                                className="mt-1 w-full py-1 bg-purple-950 hover:bg-purple-900 text-purple-300 border border-purple-800 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                              >
+                                Cargar solo Regreso en formulario
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleImportFullItinerary}
+                          className="w-full py-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-xl font-black text-xs shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                        >
+                          <Check className="w-4 h-4" /> Importar Itinerario Completo (Guardar Ida y Regreso de una vez)
+                        </button>
+                      </div>
+                    )}
+
+                    {autoFillSuccessMsg && (
+                      <div className="p-2.5 bg-cyan-950/60 border border-cyan-500/40 rounded-xl text-cyan-200 text-xs flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                        <span>{autoFillSuccessMsg}</span>
+                      </div>
+                    )}
+                  
+                  </div>
+
+                  {/* SEPARADOR: DATOS MANUALES O VERIFICACIÓN */}
+                  <div className="pt-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <Ticket className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Datos del Vuelo (Revisa o Edita libremente):</span>
+                      </span>
+                      <div className="h-px bg-slate-800 flex-1"></div>
                     </div>
                   </div>
 
@@ -4053,150 +4225,6 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* SUBIDA DE FOTO O PDF DEL PASAJE CON AUTO-COMPLETADO */}
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-slate-300 font-semibold block">
-                        📸 Foto o PDF de tu Pasaje / Tarjeta de Embarque
-                      </label>
-                      <div className="flex items-center gap-1 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => handleApplySampleTicket('ida')}
-                          className="text-[11px] text-cyan-300 hover:text-cyan-200 font-bold flex items-center gap-1 cursor-pointer bg-cyan-950/60 hover:bg-cyan-900 px-2 py-0.5 rounded-lg border border-cyan-700/60 transition"
-                          title="Auto-completar vuelo de ida"
-                        >
-                          <Plane className="w-3 h-3 text-cyan-400" />
-                          <span>🛫 Ejemplo Ida</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleApplySampleTicket('vuelta')}
-                          className="text-[11px] text-purple-300 hover:text-purple-200 font-bold flex items-center gap-1 cursor-pointer bg-purple-950/60 hover:bg-purple-900 px-2 py-0.5 rounded-lg border border-purple-700/60 transition"
-                          title="Auto-completar vuelo de regreso directo"
-                        >
-                          <Plane className="w-3 h-3 text-purple-400 rotate-90" />
-                          <span>🛬 Regreso Directo</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleApplySampleTicket('escala')}
-                          className="text-[11px] text-amber-300 hover:text-amber-200 font-bold flex items-center gap-1 cursor-pointer bg-amber-950/60 hover:bg-amber-900 px-2 py-0.5 rounded-lg border border-amber-700/60 transition"
-                          title="Auto-completar regreso con escala en São Paulo"
-                        >
-                          <CornerDownRight className="w-3 h-3 text-amber-400" />
-                          <span>🔄 Con Escala</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <label className="border border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-950/60 transition">
-                      <Upload className="w-5 h-5 text-cyan-400 mb-1" />
-                      <span className="text-[11px] text-slate-300 font-medium text-center">
-                        {newBookingFile ? (
-                          <span className="text-emerald-400 font-bold">✓ {newBookingFile.name}</span>
-                        ) : (
-                          'Toca para seleccionar foto de tu pasaje o PDF'
-                        )}
-                      </span>
-                      <span className="text-[10px] text-slate-500 mt-0.5">
-                        Lector Óptico inteligente: detecta Ida, Regreso, N° de Vuelo, Código y Escalas
-                      </span>
-                      <input
-                        type="file"
-                        accept=".pdf,image/*"
-                        className="hidden"
-                        onChange={handleTicketFileChange}
-                      />
-                    </label>
-
-                    {isOcrScanning && (
-                      <div className="p-3 bg-blue-950/80 border border-blue-500/50 rounded-xl text-cyan-200 text-xs flex items-center gap-2.5 animate-pulse">
-                        <Loader2 className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />
-                        <div>
-                          <span className="font-bold block">🔍 Lector Óptico en progreso...</span>
-                          <span className="text-[11px] text-slate-300">Escaneando pasaje (número de vuelo, código de reserva, tramo ida/vuelta, escalas...)</span>
-                        </div>
-                      </div>
-                    )}
-                    {/* BANNER DE ITINERARIO COMPLETO DETECTADO */}
-                    {detectedItinerary && (
-                      <div className="p-3.5 bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 rounded-2xl border-2 border-cyan-500/50 shadow-xl space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 font-bold text-cyan-300 text-xs">
-                            <Sparkles className="w-4 h-4 text-cyan-400" />
-                            <span>✨ ¡Itinerario Completo Detectado!</span>
-                          </div>
-                          <span className="text-[10px] bg-cyan-500/20 text-cyan-300 font-mono font-bold px-2 py-0.5 rounded-full border border-cyan-500/30">
-                            Reserva: {detectedItinerary.pnr}
-                          </span>
-                        </div>
-
-                        {detectedItinerary.pasajero && (
-                          <p className="text-[11px] text-slate-300">
-                            Pasajero: <strong className="text-white">{detectedItinerary.pasajero}</strong>
-                          </p>
-                        )}
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                          {detectedItinerary.ida && (
-                            <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
-                              <span className="text-[10px] font-bold text-cyan-400 uppercase flex items-center gap-1">
-                                <Plane className="w-3 h-3" /> 1. Ida ({detectedItinerary.ida.titulo})
-                              </span>
-                              <strong className="text-white block">{detectedItinerary.ida.numeroVuelo} • {detectedItinerary.ida.origen} ➔ {detectedItinerary.ida.destino}</strong>
-                              <span className="text-[10px] text-slate-400 block">
-                                {detectedItinerary.ida.fechaTexto || detectedItinerary.ida.fecha} ({detectedItinerary.ida.hora} hrs)
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => applyDetectedLegToForm(detectedItinerary.ida!)}
-                                className="mt-1 w-full py-1 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 rounded-lg text-[10px] font-bold transition cursor-pointer"
-                              >
-                                Cargar solo Ida en formulario
-                              </button>
-                            </div>
-                          )}
-
-                          {detectedItinerary.regreso && (
-                            <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
-                              <span className="text-[10px] font-bold text-purple-400 uppercase flex items-center gap-1">
-                                <Plane className="w-3 h-3 rotate-90" /> 2. Regreso ({detectedItinerary.regreso.hasLayover ? 'Con Escala' : 'Directo'})
-                              </span>
-                              <strong className="text-white block">{detectedItinerary.regreso.numeroVuelo} • {detectedItinerary.regreso.origen} ➔ {detectedItinerary.regreso.destino}</strong>
-                              {detectedItinerary.regreso.escala && (
-                                <span className="text-[10px] text-amber-300 block line-clamp-1">
-                                  {detectedItinerary.regreso.escala}
-                                </span>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => applyDetectedLegToForm(detectedItinerary.regreso!)}
-                                className="mt-1 w-full py-1 bg-purple-950 hover:bg-purple-900 text-purple-300 border border-purple-800 rounded-lg text-[10px] font-bold transition cursor-pointer"
-                              >
-                                Cargar solo Regreso en formulario
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={handleImportFullItinerary}
-                          className="w-full py-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-xl font-black text-xs shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-1.5 transition cursor-pointer"
-                        >
-                          <Check className="w-4 h-4" /> Importar Itinerario Completo (Guardar Ida y Regreso de una vez)
-                        </button>
-                      </div>
-                    )}
-
-                    {autoFillSuccessMsg && (
-                      <div className="p-2.5 bg-cyan-950/60 border border-cyan-500/40 rounded-xl text-cyan-200 text-xs flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                        <span>{autoFillSuccessMsg}</span>
-                      </div>
-                    )}
-                  </div>
                 </>
               ) : (
                 /* ================= TRASLADO / BUS / TREN ================= */
@@ -4327,14 +4355,16 @@ export default function App() {
             </form>
           </div>
         </div>
+        </div>
       )}
 
       {/* ========================================================================= */}
       {/* --- MODAL DEDICADO: EDITAR SEGURO DE VIAJE --- */}
       {/* ========================================================================= */}
       {isEditingInsuranceModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm overflow-y-auto p-3 sm:p-4">
+          <div className="min-h-full flex items-start sm:items-center justify-center py-4 sm:py-6">
+            <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
@@ -4474,6 +4504,7 @@ export default function App() {
               </div>
             </form>
           </div>
+          </div>
         </div>
       )}
 
@@ -4563,8 +4594,9 @@ export default function App() {
       {/* --- MODAL: EDITAR SALUD RELLENABLE --- */}
       {/* ========================================================================= */}
       {isEditingHealth && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-lg w-full shadow-2xl relative text-xs my-6">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm overflow-y-auto p-3 sm:p-4">
+          <div className="min-h-full flex items-start sm:items-center justify-center py-4 sm:py-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-lg w-full shadow-2xl relative text-xs my-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="font-bold text-white text-sm">Rellenar Datos Reales de Salud y Urgencias</h3>
               <button onClick={() => setIsEditingHealth(false)} className="text-slate-400 hover:text-white p-1">✕</button>
@@ -4774,6 +4806,7 @@ export default function App() {
                 </button>
               </div>
             </form>
+          </div>
           </div>
         </div>
       )}
