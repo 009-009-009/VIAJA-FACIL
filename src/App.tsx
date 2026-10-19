@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   Compass,
+  Send,
+  ExternalLink,
+  Loader2,
+  ScanLine,
+  Landmark,
+  Building2,
   Plus,
   Calendar,
   MapPin,
@@ -51,8 +57,20 @@ import {
   DESTINATIONS,
   type DestinationPreset,
   type MobilityInfo,
-  findCountryPreset
+  findCountryPreset,
+  getEmergencyNumbers
 } from './data/destinations';
+
+export interface MoneyAgency {
+  id: string;
+  nombre: string;
+  direccion: string;
+  referencia?: string;
+  horario?: string;
+  telefono?: string;
+  notas?: string;
+  verificado: boolean;
+}
 
 interface SimpleBooking {
   id: string;
@@ -100,6 +118,8 @@ interface HealthInfo {
   hospitalCercanoDireccion: string;
   hospitalCercanoTelefono: string;
   numeroAmbulanciaLocal: string;
+  numeroPoliciaLocal?: string;
+  numeroBomberosLocal?: string;
   fondosEmergenciaNotas: string;
   tipoSangre: string;
   alergias: string;
@@ -140,6 +160,7 @@ interface SimpleTrip {
   salud: HealthInfo;
   pasajesYDocumentos: SimpleBooking[];
   equipaje: LuggageItem[];
+  puntosRetiroDinero?: MoneyAgency[];
 }
 
 const DEFAULT_TRIP: SimpleTrip = {
@@ -179,10 +200,12 @@ const DEFAULT_TRIP: SimpleTrip = {
     seguroEmail: 'asistencia@seguroviaje.com',
     seguroFechaInicio: '2025-12-26',
     seguroFechaFin: '2026-01-01',
-    hospitalCercanoNombre: 'UPA 24h Canasvieiras (Urgencias Públicas)',
-    hospitalCercanoDireccion: 'Rua Francisco Faustino dos Santos, Canasvieiras',
-    hospitalCercanoTelefono: '+55 48 3266 0149',
+    hospitalCercanoNombre: '', // Sin pre-llenar hospital ficticio; editable por el viajero
+    hospitalCercanoDireccion: '',
+    hospitalCercanoTelefono: '',
     numeroAmbulanciaLocal: '192 (SAMU Brasil)',
+    numeroPoliciaLocal: '190 (Policía Militar)',
+    numeroBomberosLocal: '193 (Bombeiros)',
     fondosEmergenciaNotas: 'Guardar boletas e informes médicos originales por si exigen reembolso.',
     tipoSangre: 'O+ (O Positivo)',
     alergias: 'Penicilina (ejemplo editable)',
@@ -209,9 +232,21 @@ const DEFAULT_TRIP: SimpleTrip = {
       notas: 'Llegada directa al Aeropuerto Hercílio Luz (FLN).'
     }
   ],
+  puntosRetiroDinero: [
+    {
+      id: 'wu-1',
+      nombre: 'Western Union / Agencia de Cambio & Remesas',
+      direccion: 'Av. das Nações 450, Canasvieiras, Florianópolis - SC',
+      referencia: 'Frente a la plaza principal, dentro de la galería comercial',
+      horario: 'Lunes a Viernes 09:00 a 17:00 / Sábados 09:00 a 13:00',
+      telefono: '+55 48 3266 8800',
+      notas: 'Llevar pasaporte físico vigente y código MTCN de 10 dígitos. Verifica en recepción antes de ir que siga activa.',
+      verificado: true
+    }
+  ],
   equipaje: [
     // Infaltables
-    { id: 'inf-1', nombre: 'Cédula física o Pasaporte vigente (en bolso de mano)', categoria: 'infaltable', listo: true },
+    { id: 'inf-1', nombre: 'Cédula física o Pasaporte vigente (en bolso de mano)', categoria: 'infaltable', listo: false },
     { id: 'inf-2', nombre: 'Dinero dividido: billetera pequeña para el día y fondo grueso del viaje oculto/caja fuerte', categoria: 'infaltable', listo: false },
     { id: 'inf-3', nombre: 'Tarjetas bancarias activadas para compras internacionales', categoria: 'infaltable', listo: false },
     { id: 'inf-4', nombre: 'Medicamentos personales con receta médica original', categoria: 'infaltable', listo: false },
@@ -330,68 +365,290 @@ export default function App() {
     setIsEditingInsuranceModal(true);
   };
 
+    // Estados para OCR y Lector Óptico de Pasajes
+  const [isOcrScanning, setIsOcrScanning] = useState(false);
+
+  // Estados para Agencias de Retiro de Dinero / Western Union
+  const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
+  const [editingAgencyId, setEditingAgencyId] = useState<string | null>(null);
+  const [agencyForm, setAgencyForm] = useState<MoneyAgency>({
+    id: '',
+    nombre: '',
+    direccion: '',
+    referencia: '',
+    horario: '',
+    telefono: '',
+    notas: '',
+    verificado: true
+  });
+
+  const openAddAgencyModal = () => {
+    setEditingAgencyId(null);
+    setAgencyForm({
+      id: `wu-${Date.now()}`,
+      nombre: 'Western Union / Agencia de Remesas',
+      direccion: '',
+      referencia: '',
+      horario: 'Lunes a Viernes 09:00 a 17:00',
+      telefono: '',
+      notas: 'Llevar pasaporte físico vigente y código MTCN de 10 dígitos.',
+      verificado: true
+    });
+    setIsAgencyModalOpen(true);
+  };
+
+  const openEditAgencyModal = (agency: MoneyAgency) => {
+    setEditingAgencyId(agency.id);
+    setAgencyForm({ ...agency });
+    setIsAgencyModalOpen(true);
+  };
+
+  const handleSaveAgency = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!agencyForm.nombre.trim() || !agencyForm.direccion.trim()) return;
+
+    setTrip((prev) => {
+      const currentList = prev.puntosRetiroDinero || [];
+      if (editingAgencyId) {
+        return {
+          ...prev,
+          puntosRetiroDinero: currentList.map((item) =>
+            item.id === editingAgencyId ? agencyForm : item
+          )
+        };
+      } else {
+        return {
+          ...prev,
+          puntosRetiroDinero: [...currentList, agencyForm]
+        };
+      }
+    });
+
+    setIsAgencyModalOpen(false);
+  };
+
+  const handleDeleteAgency = (id: string) => {
+    setTrip((prev) => ({
+      ...prev,
+      puntosRetiroDinero: (prev.puntosRetiroDinero || []).filter((item) => item.id !== id)
+    }));
+  };
+
+  // Función inteligente de parseo de texto de pasajes (Ida, Regreso y Escalas)
+  const parseTicketExtractedText = (rawText: string, fileName: string) => {
+    const textUpper = (rawText + ' ' + fileName).toUpperCase();
+    let flightFound = '';
+    let codeFound = '';
+    let airlineFound = '';
+    let seatFound = '';
+    let gateFound = '';
+    let isReturn = false;
+    let hasLayover = false;
+    let layoverCity = '';
+
+    // 1. Detección de Tramo: ¿Es Regreso / Vuelta?
+    const destName = (trip.destino || 'FLORIANOPOLIS').toUpperCase();
+    const origName = (trip.origen || 'SANTIAGO').toUpperCase();
+    if (
+      textUpper.includes('VUELTA') ||
+      textUpper.includes('REGRESO') ||
+      textUpper.includes('RETORNO') ||
+      textUpper.includes('RETURN') ||
+      textUpper.includes('BACK') ||
+      (textUpper.includes(destName) && textUpper.indexOf(destName) < textUpper.indexOf(origName) && textUpper.includes(origName))
+    ) {
+      isReturn = true;
+      setNewBookingTramoTipo('vuelta');
+      setNewBookingOrigen(`${trip.destino || 'Florianópolis'} (FLN)`);
+      setNewBookingDestino(`${trip.origen || 'Santiago'} (SCL)`);
+      if (trip.fechaRegreso) setNewBookingDate(trip.fechaRegreso);
+    } else {
+      if (textUpper.includes('IDA') || textUpper.includes('ONE WAY') || textUpper.includes('OUTBOUND')) {
+        setNewBookingTramoTipo('ida');
+      }
+    }
+
+    // 2. Detección de Escalas o Conexiones
+    if (
+      textUpper.includes('ESCALA') ||
+      textUpper.includes('CONEXION') ||
+      textUpper.includes('CONEXAO') ||
+      textUpper.includes('LAYOVER') ||
+      textUpper.includes('STOPOVER') ||
+      textUpper.includes('TRANSIT') ||
+      textUpper.includes('GRU') ||
+      textUpper.includes('SAO PAULO') ||
+      textUpper.includes('BOGOTA') ||
+      textUpper.includes('LIMA')
+    ) {
+      hasLayover = true;
+      setNewBookingHasLayover(true);
+      setNewBookingBagDirect(true);
+      if (textUpper.includes('GRU') || textUpper.includes('SAO PAULO')) {
+        layoverCity = 'Escala en São Paulo (GRU)';
+      } else if (textUpper.includes('BOG') || textUpper.includes('BOGOTA')) {
+        layoverCity = 'Escala en Bogotá (BOG)';
+      } else if (textUpper.includes('LIM') || textUpper.includes('LIMA')) {
+        layoverCity = 'Escala en Lima (LIM)';
+      } else {
+        layoverCity = 'Escala en conexión intermedia (Equipaje va directo)';
+      }
+      setNewBookingLayoverInfo(layoverCity);
+    }
+
+    // 3. Detección de Número de Vuelo
+    const flightMatch =
+      textUpper.match(/(?:FLIGHT|VUELO|VOO|N°|NO\.?)\s*[:.]?\s*([A-Z0-9]{2,3}\s?\d{3,4})/) ||
+      textUpper.match(/\b(JA\s?\d{3,4}|LA\s?\d{3,4}|H2\s?\d{3,4}|G3\s?\d{3,4}|AD\s?\d{3,4}|IB\s?\d{3,4}|AV\s?\d{3,4}|CM\s?\d{3,4})\b/) ||
+      textUpper.match(/\b([A-Z0-9]{2,3})\s?[-_]?\s?(\d{3,4})\b/);
+
+    if (flightMatch) {
+      flightFound = flightMatch[1] ? (flightMatch[2] ? `${flightMatch[1]} ${flightMatch[2]}` : flightMatch[1]) : flightMatch[0];
+      setNewBookingNumeroVuelo(flightFound.trim());
+    }
+
+    // 4. Detección de Código de Reserva (PNR de 6 letras/números)
+    const pnrMatches = textUpper.match(/\b([A-Z0-9]{6})\b/g);
+    if (pnrMatches) {
+      const ignoredWords = ['PASSEN', 'TICKET', 'VUELOS', 'FLIGHT', 'PASAJE', 'ITINER', 'CAMERA', 'IMAGEN', 'SCREEN', 'MOBILE', 'AIRLIN', 'LATAMX', 'DIRECT', 'ESCALA', 'AVANCE', 'NORMAL'];
+      const validCode = pnrMatches.find(c => !ignoredWords.includes(c) && !/^\d+$/.test(c));
+      if (validCode) {
+        codeFound = validCode;
+        setNewBookingCode(codeFound);
+      }
+    }
+
+    // 5. Detección de Aerolínea
+    if (textUpper.includes('LATAM')) airlineFound = 'LATAM Airlines';
+    else if (textUpper.includes('JETSMART')) airlineFound = 'JetSmart';
+    else if (textUpper.includes('SKY')) airlineFound = 'Sky Airline';
+    else if (textUpper.includes('GOL')) airlineFound = 'Gol Linhas Aéreas';
+    else if (textUpper.includes('AZUL')) airlineFound = 'Azul Linhas Aéreas';
+    else if (textUpper.includes('AVIANCA')) airlineFound = 'Avianca';
+    else if (textUpper.includes('IBERIA')) airlineFound = 'Iberia';
+    else if (textUpper.includes('COPA')) airlineFound = 'Copa Airlines';
+    else if (textUpper.includes('AIR EUROPA')) airlineFound = 'Air Europa';
+    if (airlineFound) setNewBookingTitle(airlineFound);
+
+    // 6. Detección de Asiento
+    const seatMatch = textUpper.match(/(?:ASIENTO|SEAT|ASSENTO)\s*[:.]?\s*([0-9]{1,2}[A-F])/);
+    if (seatMatch) {
+      seatFound = seatMatch[1];
+      setNewBookingAsiento(seatFound);
+    }
+
+    // 7. Detección de Puerta / Terminal
+    const gateMatch = textUpper.match(/(?:PUERTA|GATE|PORTAO)\s*[:.]?\s*([A-Z0-9\s-]{2,8})/);
+    if (gateMatch) {
+      gateFound = gateMatch[1].trim();
+      setNewBookingTerminalPuerta(gateFound);
+    }
+
+    // 8. Mensaje de éxito o retroalimentación
+    if (flightFound || codeFound || airlineFound) {
+      setAutoFillSuccessMsg(
+        `✨ ¡Lector Óptico detectó datos! ${isReturn ? '🛬 Tramo: REGRESO' : '🛫 Tramo: IDA'} | Vuelo: ${flightFound || 'A revisar'} | Reserva: ${codeFound || 'A revisar'}${hasLayover ? ' | 🔄 Con escala' : ''}. Puedes editar cualquier campo manualmente.`
+      );
+    } else {
+      setAutoFillSuccessMsg(
+        `📸 Archivo "${fileName}" cargado. Puedes usar los botones de auto-completar ejemplo o ingresar los datos libremente.`
+      );
+    }
+  };
+
   const handleTicketFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        const fileDataUrl = reader.result as string;
         const fileObj = {
           name: file.name,
-          url: reader.result as string
+          url: fileDataUrl
         };
         setNewBookingFile(fileObj);
 
-        // Intento de auto-detección inteligente por nombre de archivo
-        const name = file.name.toUpperCase();
-        let flightFound = '';
-        let codeFound = '';
-        let airlineFound = '';
+        // Si es una imagen, ejecutamos el Lector Óptico con Tesseract
+        if (file.type.startsWith('image/')) {
+          setIsOcrScanning(true);
+          setAutoFillSuccessMsg('🔍 Lector Óptico escaneando pasaje y detectando datos...');
 
-        const flightMatch = name.match(/([A-Z0-9]{2,3})\s?[-_]?\s?(\d{3,4})/);
-        if (flightMatch) {
-          flightFound = `${flightMatch[1]} ${flightMatch[2]}`;
+          let fullExtractedText = file.name;
+          try {
+            const { createWorker } = await import('tesseract.js');
+            const worker = await createWorker('spa+eng');
+            const ret = await worker.recognize(fileDataUrl);
+            await worker.terminate();
+            if (ret && ret.data && ret.data.text) {
+              fullExtractedText += ' ' + ret.data.text;
+            }
+          } catch (ocrErr) {
+            console.warn('OCR con tesseract omitido o diferido:', ocrErr);
+          } finally {
+            setIsOcrScanning(false);
+          }
+
+          parseTicketExtractedText(fullExtractedText, file.name);
+        } else {
+          // Si es PDF u otro, usamos análisis inteligente de metadatos/nombre
+          parseTicketExtractedText(file.name, file.name);
         }
-
-        const pnrMatch = name.match(/\b([A-Z0-9]{6})\b/);
-        if (pnrMatch && !/VUELOS|PASAJE|TICKET|ITINER|IMAGEN|CAMERA/i.test(pnrMatch[1])) {
-          codeFound = pnrMatch[1];
-        }
-
-        if (name.includes('LATAM')) airlineFound = 'LATAM Airlines';
-        else if (name.includes('JETSMART')) airlineFound = 'JetSmart';
-        else if (name.includes('SKY')) airlineFound = 'Sky Airline';
-        else if (name.includes('GOL')) airlineFound = 'Gol Linhas Aéreas';
-
-        if (flightFound) setNewBookingNumeroVuelo(flightFound);
-        if (codeFound) setNewBookingCode(codeFound);
-        if (airlineFound) setNewBookingTitle(airlineFound);
-        if (name.includes('VUELTA') || name.includes('REGRESO')) setNewBookingTramoTipo('vuelta');
-
-        setAutoFillSuccessMsg(
-          flightFound || codeFound
-            ? `✨ ¡Datos detectados del pasaje! N° Vuelo: ${flightFound || 'Revisar'}, Código Reserva: ${codeFound || 'Revisar'}. Hemos rellenado los campos por ti.`
-            : `📸 Archivo "${file.name}" cargado exitosamente. Puedes usar el botón de auto-completar o ingresar los datos libremente.`
-        );
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleApplySampleTicket = () => {
+  const handleApplySampleTicket = (variant: 'ida' | 'vuelta' | 'escala' = 'ida') => {
     setNewBookingType('vuelo');
-    setNewBookingTramoTipo('ida');
-    setNewBookingTitle('JetSmart');
-    setNewBookingNumeroVuelo('JA 560');
-    setNewBookingCode('13N7JY');
-    setNewBookingOrigen('Santiago de Chile (SCL)');
-    setNewBookingDestino('Florianópolis (FLN)');
-    setNewBookingDate('2026-12-23');
-    setNewBookingTime('07:45');
-    setNewBookingHoraLlegada('11:15');
-    setNewBookingAsiento('12C');
-    setNewBookingTerminalPuerta('T2 - Puerta 14');
-    setNewBookingHasLayover(false);
-    setAutoFillSuccessMsg('✨ ¡Datos de pasaje auto-completados exitosamente! Revisa los campos y pulsa Guardar.');
+    if (variant === 'ida') {
+      setNewBookingTramoTipo('ida');
+      setNewBookingTitle('JetSmart');
+      setNewBookingNumeroVuelo('JA 560');
+      setNewBookingCode('13N7JY');
+      setNewBookingOrigen(`${trip.origen || 'Santiago'} (SCL)`);
+      setNewBookingDestino(`${trip.destino || 'Florianópolis'} (FLN)`);
+      setNewBookingDate(trip.fechaSalida || '2026-12-23');
+      setNewBookingTime('07:45');
+      setNewBookingHoraLlegada('11:15');
+      setNewBookingAsiento('12C');
+      setNewBookingTerminalPuerta('T2 - Puerta 14');
+      setNewBookingHasLayover(false);
+      setNewBookingLayoverInfo('');
+      setNewBookingBagDirect(true);
+      setAutoFillSuccessMsg('✨ ¡Vuelo de IDA auto-completado! Puedes revisar o editar cualquier dato antes de guardar.');
+    } else if (variant === 'vuelta') {
+      setNewBookingTramoTipo('vuelta');
+      setNewBookingTitle('JetSmart');
+      setNewBookingNumeroVuelo('JA 561');
+      setNewBookingCode('13N7JY');
+      setNewBookingOrigen(`${trip.destino || 'Florianópolis'} (FLN)`);
+      setNewBookingDestino(`${trip.origen || 'Santiago'} (SCL)`);
+      setNewBookingDate(trip.fechaRegreso || '2026-12-30');
+      setNewBookingTime('16:20');
+      setNewBookingHoraLlegada('20:10');
+      setNewBookingAsiento('14A');
+      setNewBookingTerminalPuerta('T1 - Puerta 6');
+      setNewBookingHasLayover(false);
+      setNewBookingLayoverInfo('');
+      setNewBookingBagDirect(true);
+      setAutoFillSuccessMsg('✨ ¡Vuelo de REGRESO DIRECTO auto-completado! Todo listo para revisar o guardar.');
+    } else if (variant === 'escala') {
+      setNewBookingTramoTipo('vuelta');
+      setNewBookingTitle('LATAM Airlines');
+      setNewBookingNumeroVuelo('LA 3314');
+      setNewBookingCode('9K7PL2');
+      setNewBookingOrigen(`${trip.destino || 'Florianópolis'} (FLN)`);
+      setNewBookingDestino(`${trip.origen || 'Santiago'} (SCL)`);
+      setNewBookingDate(trip.fechaRegreso || '2026-12-30');
+      setNewBookingTime('13:10');
+      setNewBookingHoraLlegada('19:40');
+      setNewBookingAsiento('18F');
+      setNewBookingTerminalPuerta('T1 - Puerta 3');
+      setNewBookingHasLayover(true);
+      setNewBookingLayoverInfo('Escala de 2h 15m en São Paulo (Guarulhos GRU)');
+      setNewBookingBagDirect(true);
+      setAutoFillSuccessMsg('✨ ¡Vuelo de REGRESO CON ESCALA auto-completado! Incluye conexión y aviso de equipaje directo.');
+    }
   };
 
 
@@ -413,6 +670,65 @@ export default function App() {
     consuladoDireccion: trip.consuladoDireccion
   });
 
+  // Estados para Origen del Viajero
+  const [targetOrigin, setTargetOrigin] = useState<string>(trip.origen || 'Santiago');
+
+  // Modal para editar Centro Médico / Clínica
+  const [isEditingHospitalModal, setIsEditingHospitalModal] = useState(false);
+  const [hospitalForm, setHospitalForm] = useState({
+    nombre: trip.salud.hospitalCercanoNombre || '',
+    direccion: trip.salud.hospitalCercanoDireccion || '',
+    telefono: trip.salud.hospitalCercanoTelefono || ''
+  });
+
+  const openEditHospitalModal = () => {
+    setHospitalForm({
+      nombre: trip.salud.hospitalCercanoNombre || '',
+      direccion: trip.salud.hospitalCercanoDireccion || '',
+      telefono: trip.salud.hospitalCercanoTelefono || ''
+    });
+    setIsEditingHospitalModal(true);
+  };
+
+  const handleSaveHospital = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTrip((prev) => ({
+      ...prev,
+      salud: {
+        ...prev.salud,
+        hospitalCercanoNombre: hospitalForm.nombre.trim(),
+        hospitalCercanoDireccion: hospitalForm.direccion.trim(),
+        hospitalCercanoTelefono: hospitalForm.telefono.trim()
+      }
+    }));
+    setIsEditingHospitalModal(false);
+  };
+
+  // Modal para editar Contacto Familiar en Casa
+  const [isEditingFamiliarModal, setIsEditingFamiliarModal] = useState(false);
+  const [familiarForm, setFamiliarForm] = useState({
+    nombre: trip.familiarNombre || '',
+    telefono: trip.familiarTelefono || ''
+  });
+
+  const openEditFamiliarModal = () => {
+    setFamiliarForm({
+      nombre: trip.familiarNombre || '',
+      telefono: trip.familiarTelefono || ''
+    });
+    setIsEditingFamiliarModal(true);
+  };
+
+  const handleSaveFamiliar = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTrip((prev) => ({
+      ...prev,
+      familiarNombre: familiarForm.nombre.trim() || 'Familiar en Casa',
+      familiarTelefono: familiarForm.telefono.trim() || ''
+    }));
+    setIsEditingFamiliarModal(false);
+  };
+
   // Estados para Selección y Personalización de Destino (País + Ciudad separados)
   const [targetCountryKey, setTargetCountryKey] = useState<string>(trip.paisKey || 'brasil');
   const [targetCity, setTargetCity] = useState<string>(trip.destino || 'Florianópolis');
@@ -431,6 +747,7 @@ export default function App() {
   const [manualEnchufeOverride, setManualEnchufeOverride] = useState<string>('');
 
   const openChangeDestinationModal = () => {
+    setTargetOrigin(trip.origen || 'Santiago');
     setTargetCountryKey(trip.paisKey || 'brasil');
     setTargetCity(trip.destino || 'Florianópolis');
     setCountrySearchQuery('');
@@ -470,6 +787,8 @@ export default function App() {
   const handleApplyDestination = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
+    const finalOrigin = targetOrigin.trim() || trip.origen || 'Santiago';
+
     if (isCustomCountryMode) {
       const matched = findCountryPreset(customCountryForm.pais);
       const finalCountry = customCountryForm.pais.trim() || (matched ? matched.pais : 'Destino Internacional');
@@ -477,65 +796,83 @@ export default function App() {
       const finalMoneda = manualCurrencyOverride.trim() || customCountryForm.moneda.trim() || (matched ? matched.moneda : 'Moneda Local / Dólar USD');
       const finalEnchufe = manualEnchufeOverride.trim() || customCountryForm.enchufe.trim() || (matched ? matched.enchufe : 'Adaptador Universal (Tipo A, C o G)');
       const finalVoltaje = customCountryForm.voltaje.trim() || (matched ? matched.voltaje : '110V - 240V');
-      const finalAmbulancia = customCountryForm.ambulancia.trim() || (matched ? matched.ambulancia : '112 / 911 (Emergencias)');
       const finalClima = customCountryForm.clima.trim() || (matched ? matched.clima : 'Clima de temporada');
+      const emNumbers = getEmergencyNumbers(finalCountry);
 
-      setTrip((prev) => ({
-        ...prev,
-        paisKey: matched ? (Object.keys(DESTINATIONS).find((k) => DESTINATIONS[k].pais === matched.pais) || 'custom') : 'custom',
-        pais: finalCountry,
-        destino: finalCity,
-        bandera: matched ? matched.bandera : '🌍',
-        nombre: `Viaje a ${finalCity}, ${finalCountry}`,
-        moneda: finalMoneda,
-        enchufe: finalEnchufe,
-        voltaje: finalVoltaje,
-        clima: finalClima,
-        consuladoNombre: matched ? matched.consuladoDefault : `Consulado / Embajada en ${finalCountry}`,
-        consuladoTelefono: matched ? matched.consuladoTelDefault : '+1 800 000 000',
-        consuladoDireccion: matched ? matched.consuladoDirDefault : `Capital de ${finalCountry}`,
-        movilidad: matched ? matched.movilidad : {
-          llegadaAeropuerto: `Usa transporte oficial autorizado en el aeropuerto o terminal de ${finalCity}. Evita transportes informales.`,
-          appsYTransporte: `Averigua si en ${finalCountry} opera Uber u otra app local y cómo funciona el pago de buses/metro.`,
-          alquilerYConduccion: `Consulta si exigen Licencia de Conducir Internacional o si basta tu licencia nacional en ${finalCountry}.`,
-          mapasOffline: `Descarga el mapa sin conexión de ${finalCity} en Google Maps antes de salir del hotel.`,
-          costumbresDinero: `Lleva una parte en efectivo de ${finalMoneda} y activa tus tarjetas de débito/crédito para compras en el extranjero.`
-        },
-        salud: {
-          ...prev.salud,
-          numeroAmbulanciaLocal: finalAmbulancia
-        }
-      }));
+      setTrip((prev) => {
+        const countryChanged = prev.pais !== finalCountry || prev.destino !== finalCity;
+        return {
+          ...prev,
+          paisKey: matched ? (Object.keys(DESTINATIONS).find((k) => DESTINATIONS[k].pais === matched.pais) || 'custom') : 'custom',
+          pais: finalCountry,
+          origen: finalOrigin,
+          destino: finalCity,
+          bandera: matched ? matched.bandera : '🌍',
+          nombre: `Viaje a ${finalCity}, ${finalCountry}`,
+          moneda: finalMoneda,
+          enchufe: finalEnchufe,
+          voltaje: finalVoltaje,
+          clima: finalClima,
+          consuladoNombre: matched ? matched.consuladoDefault : `Consulado / Embajada en ${finalCountry}`,
+          consuladoTelefono: matched ? matched.consuladoTelDefault : '+1 800 000 000',
+          consuladoDireccion: matched ? matched.consuladoDirDefault : `Capital de ${finalCountry}`,
+          movilidad: matched ? matched.movilidad : {
+            llegadaAeropuerto: `Usa transporte oficial autorizado en el aeropuerto o terminal de ${finalCity}. Evita transportes informales.`,
+            appsYTransporte: `Averigua si en ${finalCountry} opera Uber u otra app local y cómo funciona el pago de buses/metro.`,
+            alquilerYConduccion: `Consulta si exigen Licencia de Conducir Internacional o si basta tu licencia nacional en ${finalCountry}.`,
+            mapasOffline: `Descarga el mapa sin conexión de ${finalCity} en Google Maps antes de salir del hotel.`,
+            costumbresDinero: `Lleva una parte en efectivo de ${finalMoneda} y activa tus tarjetas de débito/crédito para compras en el extranjero.`
+          },
+          salud: {
+            ...prev.salud,
+            numeroAmbulanciaLocal: emNumbers.ambulancia,
+            numeroPoliciaLocal: emNumbers.policia,
+            numeroBomberosLocal: emNumbers.bomberos,
+            hospitalCercanoNombre: countryChanged ? '' : prev.salud.hospitalCercanoNombre,
+            hospitalCercanoDireccion: countryChanged ? '' : prev.salud.hospitalCercanoDireccion,
+            hospitalCercanoTelefono: countryChanged ? '' : prev.salud.hospitalCercanoTelefono
+          }
+        };
+      });
     } else {
       const preset = DESTINATIONS[targetCountryKey] || DESTINATIONS.brasil;
       const finalCity = targetCity.trim() || preset.destinoDefault;
       const finalMoneda = manualCurrencyOverride.trim() || preset.moneda;
       const finalEnchufe = manualEnchufeOverride.trim() || preset.enchufe;
+      const emNumbers = getEmergencyNumbers(preset.pais);
 
-      setTrip((prev) => ({
-        ...prev,
-        paisKey: targetCountryKey,
-        pais: preset.pais,
-        destino: finalCity,
-        bandera: preset.bandera,
-        nombre: `Viaje a ${finalCity}, ${preset.pais}`,
-        moneda: finalMoneda,
-        enchufe: finalEnchufe,
-        voltaje: preset.voltaje,
-        clima: preset.clima,
-        tipoViaje: preset.tipoViajeDefault,
-        consuladoNombre: preset.consuladoDefault,
-        consuladoTelefono: preset.consuladoTelDefault,
-        consuladoDireccion: preset.consuladoDirDefault,
-        movilidad: preset.movilidad,
-        salud: {
-          ...prev.salud,
-          numeroAmbulanciaLocal: preset.ambulancia
-        }
-      }));
+      setTrip((prev) => {
+        const countryChanged = prev.paisKey !== targetCountryKey || prev.destino !== finalCity;
+        return {
+          ...prev,
+          paisKey: targetCountryKey,
+          pais: preset.pais,
+          origen: finalOrigin,
+          destino: finalCity,
+          bandera: preset.bandera,
+          nombre: `Viaje a ${finalCity}, ${preset.pais}`,
+          moneda: finalMoneda,
+          enchufe: finalEnchufe,
+          voltaje: preset.voltaje,
+          clima: preset.clima,
+          tipoViaje: preset.tipoViajeDefault,
+          consuladoNombre: preset.consuladoDefault,
+          consuladoTelefono: preset.consuladoTelDefault,
+          consuladoDireccion: preset.consuladoDirDefault,
+          movilidad: preset.movilidad,
+          salud: {
+            ...prev.salud,
+            numeroAmbulanciaLocal: emNumbers.ambulancia,
+            numeroPoliciaLocal: emNumbers.policia,
+            numeroBomberosLocal: emNumbers.bomberos,
+            hospitalCercanoNombre: countryChanged ? '' : prev.salud.hospitalCercanoNombre,
+            hospitalCercanoDireccion: countryChanged ? '' : prev.salud.hospitalCercanoDireccion,
+            hospitalCercanoTelefono: countryChanged ? '' : prev.salud.hospitalCercanoTelefono
+          }
+        };
+      });
       setPackDestinationType(preset.tipoViajeDefault);
     }
-
     setShowChangeCountryModal(false);
   };
 
@@ -578,7 +915,7 @@ export default function App() {
     const topsCount = days <= 3 ? 3 : days <= 7 ? 5 : 7;
 
     const newLuggageList: LuggageItem[] = [
-      { id: `inf-1`, nombre: 'Cédula física o Pasaporte vigente (en bolso de mano)', categoria: 'infaltable', listo: true },
+      { id: `inf-1`, nombre: 'Cédula física o Pasaporte vigente (en bolso de mano)', categoria: 'infaltable', listo: false },
       { id: `inf-2`, nombre: 'Dinero dividido: billetera pequeña para el día y fondo grueso oculto o en caja fuerte', categoria: 'infaltable', listo: false },
       { id: `inf-3`, nombre: 'Tarjetas bancarias activadas para compras internacionales', categoria: 'infaltable', listo: false },
       { id: `inf-4`, nombre: 'Medicamentos personales con receta médica original', categoria: 'infaltable', listo: false },
@@ -853,7 +1190,7 @@ export default function App() {
               }`}
             >
               <Car className="w-4 h-4 shrink-0 text-cyan-300" />
-              <span className="truncate w-full text-center">3. Moverte</span>
+              <span className="truncate w-full text-center">3. Movilidad</span>
             </button>
 
             <button
@@ -906,9 +1243,18 @@ export default function App() {
               </div>
 
               <h2 className="text-base sm:text-lg font-black text-white">{trip.nombre}</h2>
-              <p className="text-xs text-slate-300 mt-1">
-                Contacto familiar en casa: <strong className="text-cyan-300">{trip.familiarNombre} ({trip.familiarTelefono})</strong>
-              </p>
+              <div className="flex items-center justify-between gap-2 mt-1">
+                <p className="text-xs text-slate-300">
+                  Contacto familiar en casa: <strong className="text-cyan-300">{trip.familiarNombre} {trip.familiarTelefono ? `(${trip.familiarTelefono})` : ''}</strong>
+                </p>
+                <button
+                  type="button"
+                  onClick={openEditFamiliarModal}
+                  className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg text-[10px] font-bold flex items-center gap-1 transition cursor-pointer shrink-0"
+                >
+                  <Edit3 className="w-3 h-3" /> Editar
+                </button>
+              </div>
 
               <div className="mt-3 pt-3 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs">
                 <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
@@ -1453,6 +1799,135 @@ export default function App() {
             </div>
 
             {/* 2. GUÍA DE MOVILIDAD COMPLETA EN DESTINO */}
+            {/* 2. PUNTOS PARA RETIRAR DINERO / REMESAS (WESTERN UNION & CASAS DE CAMBIO) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md space-y-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Building2 className="w-4 h-4 text-amber-400" /> Puntos para Retirar Dinero o Remesas
+                  </span>
+                  <h3 className="text-base font-bold text-white mt-0.5">
+                    Agencias Verificadas (Western Union, Casas de Cambio, etc.)
+                  </h3>
+                </div>
+                <button
+                  onClick={openAddAgencyModal}
+                  className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" /> + Registrar Agencia
+                </button>
+              </div>
+
+              {/* LISTA DE AGENCIAS REGISTRADAS */}
+              <div className="space-y-2.5">
+                {trip.puntosRetiroDinero && trip.puntosRetiroDinero.length > 0 ? (
+                  trip.puntosRetiroDinero.map((agency) => (
+                    <div key={agency.id} className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-white text-sm">{agency.nombre}</span>
+                            {agency.verificado ? (
+                              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3 text-emerald-400" /> Sucursal Verificada
+                              </span>
+                            ) : (
+                              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
+                                ⚠️ Por confirmar si está activa
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-300 mt-1 flex items-start gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                            <span>{agency.direccion}</span>
+                          </p>
+                          {agency.referencia && (
+                            <p className="text-[11px] text-slate-400 mt-0.5 italic pl-4">
+                              Ref: {agency.referencia}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => openEditAgencyModal(agency)}
+                            className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                            title="Editar agencia"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAgency(agency.id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                            title="Eliminar agencia"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1 border-t border-slate-900">
+                        {agency.horario && (
+                          <div className="flex items-center gap-1 text-slate-300">
+                            <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
+                            <span>Horario: {agency.horario}</span>
+                          </div>
+                        )}
+                        {agency.telefono && (
+                          <div className="flex items-center gap-1 text-slate-300">
+                            <Phone className="w-3 h-3 text-emerald-400 shrink-0" />
+                            <a href={`tel:${agency.telefono}`} className="text-cyan-300 hover:underline">
+                              {agency.telefono}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {agency.notas && (
+                        <div className="text-[11px] text-cyan-200/90 bg-cyan-950/40 p-2 rounded-lg border border-cyan-800/40 flex items-start gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                          <span>{agency.notas}</span>
+                        </div>
+                      )}
+
+                      {/* ACCIONES RÁPIDAS PARA EL VIAJERO */}
+                      <div className="flex items-center gap-2 pt-1 flex-wrap">
+                        <button
+                          onClick={() => copyToClipboard(agency.direccion, `agency-${agency.id}`)}
+                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg text-xs font-medium flex items-center gap-1 transition cursor-pointer border border-slate-800"
+                        >
+                          {copiedKey === `agency-${agency.id}` ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedKey === `agency-${agency.id}` ? '¡Dirección copiada!' : 'Copiar dirección para taxi'}</span>
+                        </button>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${agency.nombre} ${agency.direccion}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-cyan-300 rounded-lg text-xs font-medium flex items-center gap-1 transition border border-slate-800"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Buscar en Google Maps</span>
+                        </a>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 bg-slate-950/60 rounded-xl border border-dashed border-slate-800 text-center space-y-2">
+                    <p className="text-xs text-slate-400">
+                      No tienes agencias registradas aún. Si vas a necesitar retirar efectivo o enviar remesas, anota aquí la dirección verificada.
+                    </p>
+                    <button
+                      onClick={openAddAgencyModal}
+                      className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> + Agregar Western Union u otra agencia
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 3. GUÍA DE MOVILIDAD COMPLETA EN DESTINO */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
               <div className="flex items-center justify-between gap-2">
                 <div>
@@ -1759,52 +2234,145 @@ export default function App() {
               )}
             </div>
 
-            {/* Urgencias y Ambulancia */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2 shadow-md">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block">Ambulancia y Hospital Cercano:</span>
+            {/* Urgencias Médicas, Policiales y Bomberos Oficiales */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
+              <span className="text-xs font-bold uppercase text-slate-300 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                Números de Emergencia Oficiales en {trip.pais}:
+              </span>
               
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-                <div>
-                  <span className="text-slate-400 text-[11px] block">Ambulancia Oficial en {trip.pais}:</span>
-                  <strong className="text-red-400 font-mono text-sm">{trip.salud.numeroAmbulanciaLocal}</strong>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                {/* 1. Ambulancia */}
+                <div className="p-3 rounded-xl bg-slate-950 border border-red-500/30 flex flex-col justify-between space-y-2">
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold block flex items-center gap-1">
+                      🚑 Ambulancia:
+                    </span>
+                    <strong className="text-red-400 font-mono text-sm block mt-0.5">
+                      {trip.salud.numeroAmbulanciaLocal || '112 / 911'}
+                    </strong>
+                  </div>
+                  <a
+                    href={`tel:${(trip.salud.numeroAmbulanciaLocal || '112').replace(/[^0-9]/g, '')}`}
+                    className="py-1.5 px-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs text-center transition block"
+                  >
+                    Llamar Ambulancia
+                  </a>
                 </div>
-                <a
-                  href={`tel:${trip.salud.numeroAmbulanciaLocal.replace(/[^0-9]/g, '')}`}
-                  className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-xs"
-                >
-                  Llamar Ambulancia
-                </a>
+
+                {/* 2. Policía */}
+                <div className="p-3 rounded-xl bg-slate-950 border border-blue-500/30 flex flex-col justify-between space-y-2">
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold block flex items-center gap-1">
+                      👮 Policía Local:
+                    </span>
+                    <strong className="text-blue-400 font-mono text-sm block mt-0.5">
+                      {trip.salud.numeroPoliciaLocal || '112 / 911'}
+                    </strong>
+                  </div>
+                  <a
+                    href={`tel:${(trip.salud.numeroPoliciaLocal || '112').replace(/[^0-9]/g, '')}`}
+                    className="py-1.5 px-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs text-center transition block"
+                  >
+                    Llamar Policía
+                  </a>
+                </div>
+
+                {/* 3. Bomberos */}
+                <div className="p-3 rounded-xl bg-slate-950 border border-amber-500/30 flex flex-col justify-between space-y-2">
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold block flex items-center gap-1">
+                      🚒 Bomberos:
+                    </span>
+                    <strong className="text-amber-400 font-mono text-sm block mt-0.5">
+                      {trip.salud.numeroBomberosLocal || '112 / 911'}
+                    </strong>
+                  </div>
+                  <a
+                    href={`tel:${(trip.salud.numeroBomberosLocal || '112').replace(/[^0-9]/g, '')}`}
+                    className="py-1.5 px-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-bold text-xs text-center transition block"
+                  >
+                    Llamar Bomberos
+                  </a>
+                </div>
               </div>
 
-              <div className="text-xs text-slate-300 pt-1">
-                <span className="text-slate-400 block text-[11px]">Centro Médico / Clínica más cercano al hotel:</span>
-                <strong className="text-white block mt-0.5">{trip.salud.hospitalCercanoNombre || 'No especificado (averiguar al llegar)'}</strong>
-                <p className="text-slate-300 text-[11px] mt-0.5">{trip.salud.hospitalCercanoDireccion}</p>
-                {trip.salud.hospitalCercanoTelefono && (
-                  <p className="text-cyan-300 font-mono text-[11px] mt-0.5">Tel: {trip.salud.hospitalCercanoTelefono}</p>
-                )}
-
-                {/* Botones de acción rápida */}
-                <div className="mt-2.5 flex flex-wrap gap-2">
-                  {trip.salud.hospitalCercanoDireccion && (
-                    <button
-                      onClick={() => copyToClipboard(trip.salud.hospitalCercanoDireccion, 'dir_hospital')}
-                      className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
-                    >
-                      {copiedKey === 'dir_hospital' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                      <span>{copiedKey === 'dir_hospital' ? '¡Dirección copiada!' : 'Copiar dirección para Uber / Waze'}</span>
-                    </button>
-                  )}
-                  {trip.salud.hospitalCercanoTelefono && (
-                    <a
-                      href={`tel:${trip.salud.hospitalCercanoTelefono.replace(/[^0-9+]/g, '')}`}
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
-                    >
-                      <Phone className="w-3.5 h-3.5" />
-                      <span>Llamar al Centro Médico</span>
-                    </a>
-                  )}
+              {/* CENTRO MÉDICO O CLÍNICA MÁS CERCANA (100% editable por el viajero) */}
+              <div className="pt-3 border-t border-slate-800 space-y-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div>
+                    <span className="text-slate-300 text-xs font-bold block">
+                      🏥 Centro Médico o Clínica más cercana al Hotel:
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      (Averigua en recepción al llegar y regístralo aquí)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openEditHospitalModal}
+                    className="px-2.5 py-1 bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>{trip.salud.hospitalCercanoNombre ? 'Editar Clínica / Hospital' : '+ Registrar Clínica'}</span>
+                  </button>
                 </div>
+
+                {trip.salud.hospitalCercanoNombre ? (
+                  <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+                    <strong className="text-white block text-sm">{trip.salud.hospitalCercanoNombre}</strong>
+                    {trip.salud.hospitalCercanoDireccion && (
+                      <p className="text-slate-300 text-xs flex items-start gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                        <span>{trip.salud.hospitalCercanoDireccion}</span>
+                      </p>
+                    )}
+                    {trip.salud.hospitalCercanoTelefono && (
+                      <p className="text-cyan-300 font-mono text-xs flex items-center gap-1">
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>Teléfono: {trip.salud.hospitalCercanoTelefono}</span>
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
+                      {trip.salud.hospitalCercanoDireccion && (
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(trip.salud.hospitalCercanoDireccion, 'dir_hospital')}
+                          className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                        >
+                          {copiedKey === 'dir_hospital' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                          <span>{copiedKey === 'dir_hospital' ? '¡Dirección copiada!' : 'Copiar dirección para Uber / Taxi'}</span>
+                        </button>
+                      )}
+                      {trip.salud.hospitalCercanoTelefono && (
+                        <a
+                          href={`tel:${trip.salud.hospitalCercanoTelefono.replace(/[^0-9+]/g, '')}`}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          <span>Llamar al Centro Médico</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-slate-950/60 rounded-xl border border-dashed border-slate-800 text-center space-y-1.5">
+                    <p className="text-xs text-amber-300 font-semibold">
+                      ⚠️ Ningún centro médico registrado para {trip.destino || trip.pais}
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Por seguridad no colocamos una dirección falsa. Al llegar a tu hotel, consulta en recepción cuál es la clínica de urgencia más recomendada y anótala aquí.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={openEditHospitalModal}
+                      className="mt-1 px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Escribir Centro Médico Cercano
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2204,9 +2772,7 @@ export default function App() {
                   placeholder="Ej: Barcelona, Tel Aviv, Ciudad de Panamá, Orlando, etc."
                   className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-white font-bold text-sm outline-none transition"
                 />
-                <p className="text-[11px] text-slate-400 mt-1.5">
-                  💡 <strong className="text-slate-300">No estás limitado a la capital:</strong> Si viajas a España puedes escribir Barcelona, Ibiza, Sevilla o Valencia; si viajas a Israel puedes poner Tel Aviv o Jerusalén; si vas a Panamá puedes poner Bocas del Toro.
-                </p>
+                
 
                 {/* Sugerencias rápidas de ciudades si el país tiene lista */}
                 {!isCustomCountryMode && DESTINATIONS[targetCountryKey]?.ciudadesSugeridas && (
@@ -2549,9 +3115,18 @@ export default function App() {
 
               {/* 2. CONTACTO FAMILIAR EN CASA */}
               <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
-                <span className="text-slate-400 text-[10px] uppercase font-bold block flex items-center gap-1">
-                  <span>🏠</span> Contacto Familiar en Casa:
-                </span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
+                    <span>🏠</span> Contacto Familiar en Casa:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={openEditFamiliarModal}
+                    className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                  >
+                    <Edit3 className="w-3 h-3" /> Editar
+                  </button>
+                </div>
                 <strong className="text-cyan-300 text-xs block mt-0.5">{trip.familiarNombre}</strong>
                 <div className="mt-2 flex items-center gap-2">
                   <a
@@ -2747,6 +3322,306 @@ export default function App() {
                   className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold"
                 >
                   Guardar Alojamiento
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+                  {/* ========================================================================= */}
+      {/* --- MODAL: EDITAR / REGISTRAR CENTRO MÉDICO O CLÍNICA CERCANA --- */}
+      {/* ========================================================================= */}
+      {isEditingHospitalModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
+                  <Stethoscope className="w-4 h-4 text-emerald-400" />
+                  Centro Médico / Clínica más Cercana
+                </h3>
+                <span className="text-[10px] text-slate-400">
+                  Averigua en recepción al llegar a tu alojamiento y anótalo aquí
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditingHospitalModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveHospital} className="space-y-3 mt-4">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Nombre de la Clínica u Hospital *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Clínica San Pablo / Hospital Municipal / Urgencias 24h"
+                  value={hospitalForm.nombre}
+                  onChange={(e) => setHospitalForm({ ...hospitalForm, nombre: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Dirección Exacta (para mostrarle a taxi o Uber) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Calle Principal 450, Centro"
+                  value={hospitalForm.direccion}
+                  onChange={(e) => setHospitalForm({ ...hospitalForm, direccion: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Teléfono de Urgencias Médicas
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: +55 48 3266 0149 o número local"
+                  value={hospitalForm.telefono}
+                  onChange={(e) => setHospitalForm({ ...hospitalForm, telefono: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingHospitalModal(false)}
+                  className="flex-1 py-2 rounded-xl border border-slate-800 text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black transition shadow-lg shadow-emerald-600/20 cursor-pointer"
+                >
+                  ✓ Guardar Centro Médico
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* --- MODAL: EDITAR CONTACTO FAMILIAR EN CASA --- */}
+      {/* ========================================================================= */}
+      {isEditingFamiliarModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
+                  <Home className="w-4 h-4 text-cyan-400" />
+                  Contacto Familiar en tu País / Casa
+                </h3>
+                <span className="text-[10px] text-slate-400">
+                  A quién contactar o llamar en caso de urgencia
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditingFamiliarModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveFamiliar} className="space-y-3 mt-4">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Nombre del Familiar o Contacto de Emergencia *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Soledad (Hermana) / Carlos (Hijo)"
+                  value={familiarForm.nombre}
+                  onChange={(e) => setFamiliarForm({ ...familiarForm, nombre: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Teléfono o WhatsApp con código de país *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: +56 9 7654 3210 o +54 9 11..."
+                  value={familiarForm.telefono}
+                  onChange={(e) => setFamiliarForm({ ...familiarForm, telefono: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingFamiliarModal(false)}
+                  className="flex-1 py-2 rounded-xl border border-slate-800 text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black transition shadow-lg shadow-blue-600/20 cursor-pointer"
+                >
+                  ✓ Guardar Familiar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* --- MODAL: REGISTRAR / EDITAR AGENCIA DE RETIRO DE DINERO (WESTERN UNION) --- */}
+      {/* ========================================================================= */}
+      {isAgencyModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 max-w-md w-full shadow-2xl relative text-xs my-6">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4 text-amber-400" />
+                  {editingAgencyId ? 'Editar Agencia de Retiro' : 'Registrar Agencia de Retiro o Remesas'}
+                </h3>
+                <span className="text-[10px] text-slate-400">
+                  Western Union, MoneyGram, Casa de Cambio o Punto de Cobro
+                </span>
+              </div>
+              <button
+                onClick={() => setIsAgencyModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAgency} className="space-y-3 mt-4">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Nombre de la Agencia o Entidad *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Western Union - Canasvieiras Centro"
+                  value={agencyForm.nombre}
+                  onChange={(e) => setAgencyForm({ ...agencyForm, nombre: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Dirección Física Completa * (para taxi o GPS)
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Av. das Nações 450, Florianópolis - SC"
+                  value={agencyForm.direccion}
+                  onChange={(e) => setAgencyForm({ ...agencyForm, direccion: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Punto de Referencia (Cómo ubicarla al llegar)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: Al lado de la farmacia Panvel, frente a la plaza"
+                  value={agencyForm.referencia || ''}
+                  onChange={(e) => setAgencyForm({ ...agencyForm, referencia: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Horario de Atención
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Lun a Vie 9:00 - 17:00"
+                    value={agencyForm.horario || ''}
+                    onChange={(e) => setAgencyForm({ ...agencyForm, horario: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Teléfono Local
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: +55 48 3266 8800"
+                    value={agencyForm.telefono || ''}
+                    onChange={(e) => setAgencyForm({ ...agencyForm, telefono: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Notas de Retiro y Requisitos
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Ej: Llevar pasaporte físico vigente y código MTCN de 10 dígitos. Pedir efectivo en moneda local."
+                  value={agencyForm.notas || ''}
+                  onChange={(e) => setAgencyForm({ ...agencyForm, notas: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 p-2 bg-slate-950 rounded-xl border border-slate-800">
+                <input
+                  type="checkbox"
+                  id="chkAgencyVerif"
+                  checked={agencyForm.verificado}
+                  onChange={(e) => setAgencyForm({ ...agencyForm, verificado: e.target.checked })}
+                  className="w-4 h-4 text-emerald-500 rounded cursor-pointer"
+                />
+                <label htmlFor="chkAgencyVerif" className="text-slate-300 text-[11px] cursor-pointer">
+                  <strong className="text-emerald-400">Sucursal Verificada:</strong> Confirmo o me informaron que esta sucursal sigue activa hoy.
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAgencyModalOpen(false)}
+                  className="flex-1 py-2 rounded-xl border border-slate-800 text-slate-300 hover:bg-slate-800 font-bold transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black transition shadow-lg shadow-amber-500/20 cursor-pointer"
+                >
+                  ✓ Guardar Agencia
                 </button>
               </div>
             </form>
@@ -3077,14 +3952,35 @@ export default function App() {
                       <label className="text-slate-300 font-semibold block">
                         📸 Foto o PDF de tu Pasaje / Tarjeta de Embarque
                       </label>
-                      <button
-                        type="button"
-                        onClick={handleApplySampleTicket}
-                        className="text-[11px] text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 cursor-pointer bg-cyan-950/50 hover:bg-cyan-950 px-2 py-0.5 rounded-lg border border-cyan-800 transition"
-                      >
-                        <Sparkles className="w-3 h-3 text-cyan-400" />
-                        <span>Auto-completar ejemplo</span>
-                      </button>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => handleApplySampleTicket('ida')}
+                          className="text-[11px] text-cyan-300 hover:text-cyan-200 font-bold flex items-center gap-1 cursor-pointer bg-cyan-950/60 hover:bg-cyan-900 px-2 py-0.5 rounded-lg border border-cyan-700/60 transition"
+                          title="Auto-completar vuelo de ida"
+                        >
+                          <Plane className="w-3 h-3 text-cyan-400" />
+                          <span>🛫 Ejemplo Ida</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApplySampleTicket('vuelta')}
+                          className="text-[11px] text-purple-300 hover:text-purple-200 font-bold flex items-center gap-1 cursor-pointer bg-purple-950/60 hover:bg-purple-900 px-2 py-0.5 rounded-lg border border-purple-700/60 transition"
+                          title="Auto-completar vuelo de regreso directo"
+                        >
+                          <Plane className="w-3 h-3 text-purple-400 rotate-90" />
+                          <span>🛬 Regreso Directo</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApplySampleTicket('escala')}
+                          className="text-[11px] text-amber-300 hover:text-amber-200 font-bold flex items-center gap-1 cursor-pointer bg-amber-950/60 hover:bg-amber-900 px-2 py-0.5 rounded-lg border border-amber-700/60 transition"
+                          title="Auto-completar regreso con escala en São Paulo"
+                        >
+                          <CornerDownRight className="w-3 h-3 text-amber-400" />
+                          <span>🔄 Con Escala</span>
+                        </button>
+                      </div>
                     </div>
 
                     <label className="border border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer bg-slate-950/60 transition">
@@ -3097,7 +3993,7 @@ export default function App() {
                         )}
                       </span>
                       <span className="text-[10px] text-slate-500 mt-0.5">
-                        Detecta automáticamente Número de Vuelo y Código de Reserva
+                        Lector Óptico inteligente: detecta Ida, Regreso, N° de Vuelo, Código y Escalas
                       </span>
                       <input
                         type="file"
@@ -3107,23 +4003,21 @@ export default function App() {
                       />
                     </label>
 
+                    {isOcrScanning && (
+                      <div className="p-3 bg-blue-950/80 border border-blue-500/50 rounded-xl text-cyan-200 text-xs flex items-center gap-2.5 animate-pulse">
+                        <Loader2 className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />
+                        <div>
+                          <span className="font-bold block">🔍 Lector Óptico en progreso...</span>
+                          <span className="text-[11px] text-slate-300">Escaneando pasaje (número de vuelo, código de reserva, tramo ida/vuelta, escalas...)</span>
+                        </div>
+                      </div>
+                    )}
                     {autoFillSuccessMsg && (
                       <div className="p-2.5 bg-cyan-950/60 border border-cyan-500/40 rounded-xl text-cyan-200 text-xs flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
                         <span>{autoFillSuccessMsg}</span>
                       </div>
                     )}
-
-                    {/* ALERTA VIAJERA SOBRE EL SEGURO EN EL PASAJE */}
-                    <div className="p-2.5 bg-amber-950/40 rounded-xl border border-amber-500/30 text-xs text-slate-300 space-y-1">
-                      <div className="flex items-center gap-1.5 font-bold text-amber-300">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span>Ojo viajero con el seguro que aparece en tu pasaje:</span>
-                      </div>
-                      <p className="text-[11px] text-slate-300 leading-relaxed">
-                        En muchos pasajes de aerolínea aparece una mención comercial que dice <em>"Seguro contratado"</em>. <strong>Ese NO es el número de la póliza médica</strong> con el que te atenderán en un hospital extranjero. Tu póliza real de asistencia debes revisarla y registrarla en el módulo <strong>Seguro de Viaje</strong>.
-                      </p>
-                    </div>
                   </div>
                 </>
               ) : (

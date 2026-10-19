@@ -19,6 +19,8 @@ export interface DestinationPreset {
   clima: string;
   tipoViajeDefault: 'playa' | 'ciudad' | 'frio';
   ambulancia: string;
+  policia?: string;
+  bomberos?: string;
   consuladoDefault: string;
   consuladoTelDefault: string;
   consuladoDirDefault: string;
@@ -747,4 +749,87 @@ export function findCountryPreset(query: string): DestinationPreset | undefined 
   });
   
   return match;
+}
+
+
+// Helper para obtener los 3 números de emergencia (Ambulancia, Policía, Bomberos)
+export function getEmergencyNumbers(countryKeyOrName: string): { ambulancia: string; policia: string; bomberos: string } {
+  const norm = (countryKeyOrName || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  if (norm.includes('brasil')) {
+    return { ambulancia: '192 (SAMU Brasil)', policia: '190 (Policía Militar)', bomberos: '193 (Bombeiros)' };
+  }
+  if (norm.includes('espana')) {
+    return { ambulancia: '112 / 061 (Urgencias)', policia: '112 / 091 (Policía Nacional)', bomberos: '112 / 080 (Bomberos)' };
+  }
+  if (norm.includes('estados unidos') || norm.includes('usa') || norm.includes('eeuu')) {
+    return { ambulancia: '911 (EMS)', policia: '911 (Police)', bomberos: '911 (Fire Dept)' };
+  }
+  if (norm.includes('argentina')) {
+    return { ambulancia: '107 (SAME)', policia: '911 / 101', bomberos: '100 (Bomberos)' };
+  }
+  if (norm.includes('colombia')) {
+    return { ambulancia: '125 / 123', policia: '123 / 112', bomberos: '119 (Bomberos)' };
+  }
+  if (norm.includes('peru')) {
+    return { ambulancia: '106 (SAMU)', policia: '105 (Policía Nacional)', bomberos: '116 (Bomberos)' };
+  }
+  if (norm.includes('chile')) {
+    return { ambulancia: '131 (SAMU)', policia: '133 (Carabineros)', bomberos: '132 (Bomberos)' };
+  }
+  if (norm.includes('mexico')) {
+    return { ambulancia: '911 (Cruz Roja / Urgencias)', policia: '911 (Policía)', bomberos: '911 / 068 (Bomberos)' };
+  }
+  if (norm.includes('israel')) {
+    return { ambulancia: '101 (Magen David Adom)', policia: '100 (Policía)', bomberos: '102 (Bomberos)' };
+  }
+  if (norm.includes('panama')) {
+    return { ambulancia: '911 (SUME)', policia: '104 (Policía Nacional)', bomberos: '103 (Bomberos)' };
+  }
+  if (norm.includes('francia')) {
+    return { ambulancia: '15 (SAMU) / 112', policia: '17 / 112', bomberos: '18 / 112' };
+  }
+  if (norm.includes('italia')) {
+    return { ambulancia: '118 / 112', policia: '113 / 112', bomberos: '115 / 112' };
+  }
+  if (norm.includes('alemania')) {
+    return { ambulancia: '112 (Notarzt)', policia: '110 (Polizei)', bomberos: '112 (Feuerwehr)' };
+  }
+  if (norm.includes('reino unido') || norm.includes('inglaterra')) {
+    return { ambulancia: '999 / 112', policia: '999 / 112', bomberos: '999 / 112' };
+  }
+  if (norm.includes('japon')) {
+    return { ambulancia: '119 (Kyu-kyu)', policia: '110 (Keisatsu)', bomberos: '119 (Shobo)' };
+  }
+  if (norm.includes('australia')) {
+    return { ambulancia: '000 (Triple Zero)', policia: '000 (Triple Zero)', bomberos: '000 (Triple Zero)' };
+  }
+  if (norm.includes('canada')) {
+    return { ambulancia: '911 (EMS)', policia: '911 (Police)', bomberos: '911 (Fire Dept)' };
+  }
+  if (norm.includes('grecia')) {
+    return { ambulancia: '166 / 112 (EKAV)', policia: '100 / 112 (Policía)', bomberos: '199 / 112 (Bomberos)' };
+  }
+  if (norm.includes('turquia')) {
+    return { ambulancia: '112', policia: '155 / 112', bomberos: '110 / 112' };
+  }
+  if (norm.includes('uruguay')) {
+    return { ambulancia: '105 / 911', policia: '911', bomberos: '104 / 911' };
+  }
+  if (norm.includes('costa rica')) {
+    return { ambulancia: '911 (Cruz Roja)', policia: '911 (Fuerza Pública)', bomberos: '911 (Bomberos)' };
+  }
+  if (norm.includes('dominicana')) {
+    return { ambulancia: '911', policia: '911', bomberos: '911' };
+  }
+  if (norm.includes('ecuador')) {
+    return { ambulancia: '911 (ECU 911)', policia: '911 (Policía)', bomberos: '911 (Bomberos)' };
+  }
+
+  // Estándar internacional
+  return {
+    ambulancia: '112 / 911 (Emergencias Médicas)',
+    policia: '112 / 911 (Policía Local)',
+    bomberos: '112 / 911 (Bomberos)'
+  };
 }
