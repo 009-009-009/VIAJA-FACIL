@@ -54,6 +54,12 @@ import {
 } from 'lucide-react';
 
 import {
+  extractTextFromPdf,
+  parseFullItinerary,
+  type DetectedItinerary,
+  type DetectedFlightLeg
+} from './utils/itineraryParser';
+import {
   DESTINATIONS,
   type DestinationPreset,
   type MobilityInfo,
@@ -348,6 +354,7 @@ export default function App() {
     setNewBookingLayoverInfo('');
     setNewBookingBagDirect(true);
     setNewBookingFile(null);
+    setDetectedItinerary(null);
     setAutoFillSuccessMsg(null);
     setIsAddingBooking(true);
   };
@@ -367,6 +374,7 @@ export default function App() {
 
     // Estados para OCR y Lector Óptico de Pasajes
   const [isOcrScanning, setIsOcrScanning] = useState(false);
+  const [detectedItinerary, setDetectedItinerary] = useState<DetectedItinerary | null>(null);
 
   // Estados para Agencias de Retiro de Dinero / Western Union
   const [isAgencyModalOpen, setIsAgencyModalOpen] = useState(false);
@@ -556,9 +564,79 @@ export default function App() {
     }
   };
 
+  const applyDetectedLegToForm = (leg: DetectedFlightLeg) => {
+    setNewBookingType('vuelo');
+    setNewBookingTramoTipo(leg.tramoTipo as any || 'ida');
+    setNewBookingTitle(leg.titulo);
+    setNewBookingNumeroVuelo(leg.numeroVuelo);
+    setNewBookingCode(leg.codigo);
+    setNewBookingOrigen(leg.origen);
+    setNewBookingDestino(leg.destino);
+    setNewBookingDate(leg.fecha);
+    setNewBookingTime(leg.hora);
+    setNewBookingHoraLlegada(leg.horaLlegada);
+    setNewBookingHasLayover(!!leg.hasLayover);
+    setNewBookingLayoverInfo(leg.escala || '');
+    setNewBookingBagDirect(leg.maletaDirecta);
+  };
+
+  const handleImportFullItinerary = () => {
+    if (!detectedItinerary || !detectedItinerary.ida || !detectedItinerary.regreso) return;
+
+    const idaDoc: SimpleBooking = {
+      id: `pas-ida-${Date.now()}`,
+      tipo: 'vuelo',
+      tramoTipo: 'ida',
+      titulo: `${detectedItinerary.ida.titulo} - ${detectedItinerary.ida.origen} ➔ ${detectedItinerary.ida.destino}`,
+      codigo: detectedItinerary.pnr,
+      numeroVuelo: detectedItinerary.ida.numeroVuelo,
+      origen: detectedItinerary.ida.origen,
+      destino: detectedItinerary.ida.destino,
+      fecha: detectedItinerary.ida.fecha,
+      hora: detectedItinerary.ida.hora,
+      horaLlegada: detectedItinerary.ida.horaLlegada,
+      maletaDirecta: true,
+      notas: detectedItinerary.ida.notas,
+      archivoNombre: newBookingFile?.name, archivoDataUrl: newBookingFile?.url
+    };
+
+    const regresoDoc: SimpleBooking = {
+      id: `pas-reg-${Date.now() + 1}`,
+      tipo: 'vuelo',
+      tramoTipo: 'vuelta',
+      titulo: `${detectedItinerary.regreso.titulo} - ${detectedItinerary.regreso.origen} ➔ ${detectedItinerary.regreso.destino}`,
+      codigo: detectedItinerary.pnr,
+      numeroVuelo: detectedItinerary.regreso.numeroVuelo,
+      origen: detectedItinerary.regreso.origen,
+      destino: detectedItinerary.regreso.destino,
+      fecha: detectedItinerary.regreso.fecha,
+      hora: detectedItinerary.regreso.hora,
+      horaLlegada: detectedItinerary.regreso.horaLlegada,
+      escala: detectedItinerary.regreso.escala,
+      maletaDirecta: true,
+      notas: detectedItinerary.regreso.notas,
+      archivoNombre: newBookingFile?.name, archivoDataUrl: newBookingFile?.url
+    };
+
+    setTrip((prev) => ({
+      ...prev,
+      pasajesYDocumentos: [
+        ...prev.pasajesYDocumentos.filter((b) => b.codigo !== detectedItinerary.pnr),
+        idaDoc,
+        regresoDoc
+      ]
+    }));
+
+    setIsAddingBooking(false);
+  };
+
   const handleTicketFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setDetectedItinerary(null);
+      setIsOcrScanning(true);
+      setAutoFillSuccessMsg('🔍 Leyendo contenido del documento de pasaje o itinerario...');
+
       const reader = new FileReader();
       reader.onload = async () => {
         const fileDataUrl = reader.result as string;
@@ -568,30 +646,53 @@ export default function App() {
         };
         setNewBookingFile(fileObj);
 
-        // Si es una imagen, ejecutamos el Lector Óptico con Tesseract
-        if (file.type.startsWith('image/')) {
-          setIsOcrScanning(true);
-          setAutoFillSuccessMsg('🔍 Lector Óptico escaneando pasaje y detectando datos...');
+        let extractedText = '';
 
-          let fullExtractedText = file.name;
+        if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+          // Extraer texto directamente del PDF
+          try {
+            extractedText = await extractTextFromPdf(file);
+          } catch (pdfErr) {
+            console.warn('Fallo extracción directa de PDF:', pdfErr);
+          }
+        } else if (file.type.startsWith('image/')) {
+          // Extraer texto con OCR Tesseract
           try {
             const { createWorker } = await import('tesseract.js');
             const worker = await createWorker('spa+eng');
             const ret = await worker.recognize(fileDataUrl);
             await worker.terminate();
             if (ret && ret.data && ret.data.text) {
-              fullExtractedText += ' ' + ret.data.text;
+              extractedText = ret.data.text;
             }
           } catch (ocrErr) {
-            console.warn('OCR con tesseract omitido o diferido:', ocrErr);
-          } finally {
-            setIsOcrScanning(false);
+            console.warn('OCR diferido:', ocrErr);
           }
+        }
 
-          parseTicketExtractedText(fullExtractedText, file.name);
+        setIsOcrScanning(false);
+
+        if (!extractedText.trim()) {
+          extractedText = file.name;
+        }
+
+        const parsed = parseFullItinerary(extractedText, file.name, trip.origen, trip.destino);
+
+        if (parsed.ida && parsed.regreso) {
+          // ¡Detectó ambos vuelos del itinerario!
+          setDetectedItinerary(parsed);
+          setAutoFillSuccessMsg(
+            `✨ ¡Itinerario Completo Detectado! Reserva: ${parsed.pnr}. Contiene Vuelo de Ida (${parsed.ida.numeroVuelo}) y Vuelo de Regreso con Escala (${parsed.regreso.numeroVuelo}). Puedes importarlo completo o editar cualquier campo.`
+          );
+          applyDetectedLegToForm(parsed.ida);
+        } else if (parsed.ida || parsed.regreso) {
+          const leg = parsed.ida || parsed.regreso!;
+          applyDetectedLegToForm(leg);
+          setAutoFillSuccessMsg(
+            `✨ ¡Datos detectados del pasaje! Vuelo: ${leg.numeroVuelo} | Reserva: ${leg.codigo}. Puedes editar cualquier campo libremente.`
+          );
         } else {
-          // Si es PDF u otro, usamos análisis inteligente de metadatos/nombre
-          parseTicketExtractedText(file.name, file.name);
+          parseTicketExtractedText(extractedText, file.name);
         }
       };
       reader.readAsDataURL(file);
@@ -1559,6 +1660,12 @@ export default function App() {
             )}
 
             
+
+            {/* Mensajito facilitador sugerido por la usuaria */}
+            <div className="py-2.5 px-3 text-center text-xs text-slate-400 bg-slate-900/60 rounded-xl border border-slate-800 flex items-center justify-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span>💡 Carga tu itinerario en PDF o ingresa tus vuelos de forma manual.</span>
+            </div>
           </div>
         )}
 
@@ -4012,6 +4119,77 @@ export default function App() {
                         </div>
                       </div>
                     )}
+                    {/* BANNER DE ITINERARIO COMPLETO DETECTADO */}
+                    {detectedItinerary && (
+                      <div className="p-3.5 bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 rounded-2xl border-2 border-cyan-500/50 shadow-xl space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-cyan-300 text-xs">
+                            <Sparkles className="w-4 h-4 text-cyan-400" />
+                            <span>✨ ¡Itinerario Completo Detectado!</span>
+                          </div>
+                          <span className="text-[10px] bg-cyan-500/20 text-cyan-300 font-mono font-bold px-2 py-0.5 rounded-full border border-cyan-500/30">
+                            Reserva: {detectedItinerary.pnr}
+                          </span>
+                        </div>
+
+                        {detectedItinerary.pasajero && (
+                          <p className="text-[11px] text-slate-300">
+                            Pasajero: <strong className="text-white">{detectedItinerary.pasajero}</strong>
+                          </p>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          {detectedItinerary.ida && (
+                            <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
+                              <span className="text-[10px] font-bold text-cyan-400 uppercase flex items-center gap-1">
+                                <Plane className="w-3 h-3" /> 1. Ida ({detectedItinerary.ida.titulo})
+                              </span>
+                              <strong className="text-white block">{detectedItinerary.ida.numeroVuelo} • {detectedItinerary.ida.origen} ➔ {detectedItinerary.ida.destino}</strong>
+                              <span className="text-[10px] text-slate-400 block">
+                                {detectedItinerary.ida.fechaTexto || detectedItinerary.ida.fecha} ({detectedItinerary.ida.hora} hrs)
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => applyDetectedLegToForm(detectedItinerary.ida!)}
+                                className="mt-1 w-full py-1 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                              >
+                                Cargar solo Ida en formulario
+                              </button>
+                            </div>
+                          )}
+
+                          {detectedItinerary.regreso && (
+                            <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
+                              <span className="text-[10px] font-bold text-purple-400 uppercase flex items-center gap-1">
+                                <Plane className="w-3 h-3 rotate-90" /> 2. Regreso ({detectedItinerary.regreso.hasLayover ? 'Con Escala' : 'Directo'})
+                              </span>
+                              <strong className="text-white block">{detectedItinerary.regreso.numeroVuelo} • {detectedItinerary.regreso.origen} ➔ {detectedItinerary.regreso.destino}</strong>
+                              {detectedItinerary.regreso.escala && (
+                                <span className="text-[10px] text-amber-300 block line-clamp-1">
+                                  {detectedItinerary.regreso.escala}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => applyDetectedLegToForm(detectedItinerary.regreso!)}
+                                className="mt-1 w-full py-1 bg-purple-950 hover:bg-purple-900 text-purple-300 border border-purple-800 rounded-lg text-[10px] font-bold transition cursor-pointer"
+                              >
+                                Cargar solo Regreso en formulario
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleImportFullItinerary}
+                          className="w-full py-2 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-xl font-black text-xs shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                        >
+                          <Check className="w-4 h-4" /> Importar Itinerario Completo (Guardar Ida y Regreso de una vez)
+                        </button>
+                      </div>
+                    )}
+
                     {autoFillSuccessMsg && (
                       <div className="p-2.5 bg-cyan-950/60 border border-cyan-500/40 rounded-xl text-cyan-200 text-xs flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
