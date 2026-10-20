@@ -2852,8 +2852,8 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <Globe2 className="w-5 h-5 text-amber-400" />
                 <div>
-                  <h3 className="font-black text-white text-base">Configurar Destino del Viaje</h3>
-                  <p className="text-[11px] text-slate-400">Elige el país y escribe la ciudad exacta que vas a recorrer</p>
+                  <h3 className="font-black text-white text-base">Configurar Origen y Destino</h3>
+                  <p className="text-[11px] text-slate-400">Configura tu ciudad de partida, país y ciudad a recorrer</p>
                 </div>
               </div>
               <button
@@ -2864,16 +2864,39 @@ export default function App() {
               </button>
             </div>
 
-            <div className="overflow-y-auto pr-1 space-y-4 py-3 flex-1">
-              {/* SECCIÓN 1: CIUDAD O REGIÓN (100% LIBRE Y EDITABLE) */}
+            <div className="overflow-y-auto pr-1 space-y-3.5 py-3 flex-1">
+              {/* SECCIÓN 1: CIUDAD O PAÍS DE ORIGEN (DESDE DÓNDE SALES) */}
+              <div className="bg-slate-950 p-3.5 rounded-2xl border border-amber-500/40 shadow-inner">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-white font-bold flex items-center gap-1.5 text-xs">
+                    <Plane className="w-4 h-4 text-amber-400" />
+                    <span>1. ¿Desde dónde sales? (Ciudad o País de Origen) *</span>
+                  </label>
+                  <span className="text-[10px] text-amber-300 font-semibold bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-800/40">
+                    Punto de partida
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={targetOrigin}
+                  onChange={(e) => setTargetOrigin(e.target.value)}
+                  placeholder="Ej: Santiago, Buenos Aires, Lima, Bogotá, Madrid, etc."
+                  className="w-full bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-xl px-3.5 py-2 text-white font-bold text-xs outline-none transition"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Cualquier viajero del mundo puede poner aquí su ciudad o país de partida.
+                </span>
+              </div>
+
+              {/* SECCIÓN 2: CIUDAD O REGIÓN DE DESTINO (100% LIBRE Y EDITABLE) */}
               <div className="bg-slate-950 p-3.5 rounded-2xl border border-cyan-500/40 shadow-inner">
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-white font-bold flex items-center gap-1.5 text-xs">
                     <MapPin className="w-4 h-4 text-cyan-400" />
-                    <span>¿Qué ciudad o lugar específico vas a visitar? *</span>
+                    <span>2. ¿Qué ciudad o lugar específico vas a visitar? *</span>
                   </label>
                   <span className="text-[10px] text-cyan-400 font-semibold bg-cyan-950/60 px-2 py-0.5 rounded-full border border-cyan-800/40">
-                    Editable y libre
+                    Destino
                   </span>
                 </div>
                 <input
@@ -2881,7 +2904,7 @@ export default function App() {
                   value={targetCity}
                   onChange={(e) => setTargetCity(e.target.value)}
                   placeholder="Ej: Barcelona, Tel Aviv, Ciudad de Panamá, Orlando, etc."
-                  className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2.5 text-white font-bold text-sm outline-none transition"
+                  className="w-full bg-slate-900 border border-slate-700 focus:border-cyan-400 rounded-xl px-3.5 py-2 text-white font-bold text-xs outline-none transition"
                 />
                 
 
