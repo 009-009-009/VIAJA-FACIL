@@ -1666,6 +1666,21 @@ export default function App() {
               <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
               <span>💡 Carga tu itinerario en PDF o ingresa tus vuelos de forma manual.</span>
             </div>
+
+            {/* Recordatorio discreto en color oro para las Reglas de Oro */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('tips');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="w-full py-2.5 px-3 text-center text-xs text-amber-300 hover:text-amber-200 bg-amber-950/20 hover:bg-amber-950/40 rounded-xl border border-amber-500/30 hover:border-amber-500/50 flex items-center justify-center gap-2 transition cursor-pointer group shadow-sm"
+              title="Ir a las Reglas de Oro"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="font-medium tracking-wide">✨ No olvides revisar las <strong className="font-bold underline decoration-amber-500/50 underline-offset-2 text-amber-300">Reglas de Oro</strong></span>
+              <span className="text-[10px] text-amber-400/80 group-hover:translate-x-0.5 transition-transform font-bold">➔</span>
+            </button>
           </div>
         )}
 
@@ -1710,9 +1725,6 @@ export default function App() {
                           {item.nombre}
                         </span>
                       </div>
-                      <span className="text-[9px] bg-rose-500/20 text-rose-300 font-bold px-2 py-0.5 rounded uppercase shrink-0">
-                        Obligatorio
-                      </span>
                     </div>
                   ))}
               </div>
@@ -2572,20 +2584,20 @@ export default function App() {
               {/* Anticipación y Policía Internacional */}
               <div className="p-3 bg-slate-950/90 rounded-xl border border-slate-800 text-xs space-y-1">
                 <strong className="text-white block font-bold">
-                  ⏰ Las 3 Horas Sagradas y Documentos en Mano:
+                  ⏰ Las 3 Horas Sagradas:
                 </strong>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Llega con <strong>3 horas de anticipación</strong> a vuelos internacionales (2 horas en nacionales). Las filas en filtros de seguridad y Policía Internacional pueden colapsar en temporada alta. Ten siempre en mano tu cédula física o pasaporte vigente, sin doblar ni guardar al fondo de la mochila.
+                  Llega con <strong>3 horas de anticipación</strong> a vuelos internacionales y <strong>2 a nacionales</strong>. Mantén siempre tu cédula o pasaporte a mano.
                 </p>
               </div>
 
               {/* Pantallas de embarque */}
               <div className="p-3 bg-slate-950/90 rounded-xl border border-slate-800 text-xs space-y-1">
                 <strong className="text-white block font-bold">
-                  📺 Verifica siempre la Pantalla de Salidas en la Sala:
+                  📺 Verifica tu Puerta de Embarque:
                 </strong>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  La puerta de embarque impresa en tu tarjeta de embarque es solo referencial y <strong>puede cambiar a última hora</strong>. Apenas cruces seguridad, busca las pantallas generales y reconfirma tu puerta real.
+                  La puerta impresa en tu boleto <strong>puede cambiar a última hora</strong>. Confírmala siempre en las pantallas del aeropuerto.
                 </p>
               </div>
             </div>
@@ -2615,7 +2627,7 @@ export default function App() {
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  El dinero en efectivo, las tarjetas bancarias y tus medicamentos recetados diarios deben ir <strong>SIEMPRE en tu mochila o bolso de mano personal bajo tu asiento</strong>. Si la maleta de bodega se retrasa, se pierde o es vulnerada, tus pertenencias vitales estarán a salvo contigo.
+                  <strong>NUNCA despaches valores a la bodega:</strong> Dinero, tarjetas y remedios diarios van <strong>SIEMPRE en tu bolso de mano</strong> contigo en la cabina.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-[11px]">
                   <div className="p-2 bg-slate-900/90 rounded-lg border border-slate-800">
@@ -2660,30 +2672,22 @@ export default function App() {
                       ALERTA VITAL DE SEGURIDAD
                     </span>
                     <h4 className="font-black text-white text-xs sm:text-sm mt-0.5">
-                      ¡NUNCA dejes tu maleta o mochila con un desconocido!
+                      ¡NUNCA le encargues tu maleta a un desconocido!
                     </h4>
                   </div>
                 </div>
                 <p className="text-[11px] leading-relaxed text-red-100">
-                  Ni para ir al baño 2 minutos, ni para comprar un café, por muy amable, simpático o educado que parezca.
+                  Ni para ir al baño 2 minutos. Si la policía encuentra algo ilegal adentro, <strong>tú respondes ante la ley</strong>. Si vas a ir al baño, entra con tu bolso o usa la custodia oficial.
                 </p>
-                <div className="p-2 bg-black/40 rounded-lg border border-red-500/30 text-[10px] space-y-0.5">
-                  <p className="text-red-200">
-                    ⚖️ <strong>Regla penal internacional:</strong> Si la policía o aduana revisa tu equipaje y alguien introdujo una sustancia ilícita o prohibida, <strong>tú respondes ante la ley</strong> por todo lo que esté en tu bolso.
-                  </p>
-                  <p className="text-amber-300 font-bold pt-0.5">
-                    👉 Lleva siempre tu bolso contigo hasta dentro del baño o usa las consignas oficiales de la terminal.
-                  </p>
-                </div>
               </div>
 
               {/* Transporte oficial en aeropuertos */}
               <div className="p-3 bg-slate-950/90 rounded-xl border border-slate-800 text-xs space-y-1">
                 <strong className="text-white block font-bold">
-                  🚕 Evita Captadores Informales en el Hall:
+                  🚕 Usa solo Transporte Oficial:
                 </strong>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Al salir de aduanas, ignora a personas que te ofrezcan "taxi barato" o "transporte directo" en el pasillo. Dirígete siempre a los <strong>counters oficiales en el interior</strong> o camina al punto señalizado de aplicaciones oficiales (Uber, etc.) para evitar cobros abusivos o paseos innecesarios.
+                  Ignora a personas que ofrezcan "taxi barato" en los pasillos del aeropuerto. Ve directo a los mostradores oficiales o pide tu Uber/99.
                 </p>
               </div>
 
@@ -2732,10 +2736,10 @@ export default function App() {
               <div className="p-3 bg-slate-950/90 rounded-xl border border-emerald-500/30 text-xs space-y-1">
                 <div className="flex items-center gap-1.5 font-bold text-emerald-300">
                   <AlertCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Plazo de 48 Horas para Dar Aviso al Seguro:</span>
+                  <span>Avisa a tu Seguro en menos de 48 Horas:</span>
                 </div>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Ante la ocurrencia de cualquier síntoma médico, accidente o problema que requiera atención, existe un <strong>plazo máximo de 48 horas</strong> para notificar a la central de asistencia. Si no avisas a tiempo, la aseguradora puede rechazar coberturas o reembolsos.
+                  Ante cualquier atención médica o accidente, <strong>debes avisar de inmediato</strong> a la central para que cubran los gastos.
                 </p>
               </div>
 
@@ -2743,10 +2747,10 @@ export default function App() {
               <div className="p-3 bg-slate-950/90 rounded-xl border border-blue-500/30 text-xs space-y-1">
                 <div className="flex items-center gap-1.5 font-bold text-cyan-300">
                   <span className="text-base">🛎️</span>
-                  <span>Regla del Hotel ante Emergencia Médica Grave:</span>
+                  <span>No hagas Check-Out en una Emergencia Grave:</span>
                 </div>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Si tú o tu acompañante sufren una emergencia médica grave u hospitalización cerca de la fecha de regreso, <strong>NO hagas el check-out de inmediato</strong> dejando las pertenencias desamparadas. Notifica a la recepción para <strong>solicitar una extensión de cortesía por fuerza mayor</strong> o custodia segura mientras interviene el consulado o llega un familiar desde casa.
+                  Si tú o tu acompañante sufren una urgencia médica cerca de la fecha de regreso, <strong>exige al hotel una extensión por fuerza mayor</strong>.
                 </p>
               </div>
             </div>
