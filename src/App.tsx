@@ -1232,6 +1232,14 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            <a
+              href="/landing.html"
+              className="px-2 py-1.5 bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+              title="Ver Página de Venta (Landing Page)"
+            >
+              <span>📄 Oferta</span>
+            </a>
+
             <button
               onClick={openChangeDestinationModal}
               className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
